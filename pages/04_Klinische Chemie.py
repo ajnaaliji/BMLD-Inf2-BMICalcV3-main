@@ -1,29 +1,30 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 import os
+import io
 import base64
+from datetime import datetime
+from docx import Document
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+import tempfile
 
-# ==== Dateipfad zur CSV definieren ====
+# ==== Dateipfad und Ordner definieren ====
 dateipfad = "data/data_klinische_chemie.csv"
+word_ordner = "data/word_klinische_chemie"
 os.makedirs("data", exist_ok=True)
+os.makedirs(word_ordner, exist_ok=True)
 
-# ==== Eintrags-ID und Lade-Logik ====
-eintrag_id = st.session_state.get("bearbeite_id")
-bearbeiten = eintrag_id is not None
-
-def lade_eintrag(eintrag_id):
-    df = pd.read_csv(dateipfad)
-    return df[df['id'] == eintrag_id].iloc[0] if eintrag_id in df['id'].values else None
-
-# ==== Vorbefüllung (wenn Bearbeiten) ====
-eintrag = lade_eintrag(eintrag_id) if bearbeiten else {}
-
+# ==== Icon laden ====
 def load_icon_base64(path):
     with open(path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
-    
+
 img_clinic = load_icon_base64("assets/clinical_chemistry.png")
+
+# ==== Start ====
+st.set_page_config(page_title="Klinische Chemie", page_icon="🧪")
 
 st.markdown(f"""
 <h1 style='display: flex; align-items: center; gap: 24px;'>
@@ -32,54 +33,38 @@ st.markdown(f"""
 </h1>
 """, unsafe_allow_html=True)
 
-from datetime import datetime
-
-fach = "Klinische Chemie"  # du kannst das auch dynamisch machen
-eintrag_id = st.session_state.get("bearbeite_id", None)
-
-st.markdown(f"""
-<div style='background-color: #eef6ff; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px;'>
-    <strong>Fach:</strong> 🧪 {fach} <br>
-    <strong>Datum:</strong> {datetime.now().strftime('%d.%m.%Y %H:%M')} <br>
-    {f"<strong>Eintrags-ID:</strong> {eintrag_id}" if eintrag_id else ""}
-</div>
-""", unsafe_allow_html=True)
-
+# ==== Formular Felder ====
 col1, col2 = st.columns(2)
 with col1:
-    name = st.text_input("Patientenname", eintrag.get("name", ""))
-    geburt = st.text_input("Geburtstag/Alter", eintrag.get("geburt", ""))
-    geschlecht = st.selectbox("Biologisches Geschlecht", ["", "weiblich", "männlich", "divers"], index=0 if not bearbeiten else ["", "weiblich", "männlich", "divers"].index(eintrag.get("geschlecht", "")))
+    patient_name = st.text_input("Patientenname")
+    geburtstag = st.text_input("Geburtstag/Alter")
+    geschlecht = st.selectbox("Geschlecht", ["", "weiblich", "männlich", "divers"])
 with col2:
-    groesse = st.text_input("Grösse (cm)", eintrag.get("groesse", ""))
-    gewicht = st.text_input("Gewicht (kg)", eintrag.get("gewicht", ""))
+    groesse = st.text_input("Größe (cm)")
+    gewicht = st.text_input("Gewicht (kg)")
 
-vorbefunde = st.text_area("Vorbefunde (falls vorhanden)", eintrag.get("vorbefunde", ""))
+vorbefunde = st.text_area("Vorbefunde", height=100)
+probenmaterial = st.text_input("Probenmaterial")
+makro = st.text_area("Makroskopische Beurteilung", height=100)
+reagenzien = st.text_area("Reagenzien (Name/LOT/Verfall)", height=100)
+qc = st.text_area("Qualitätskontrolle (Name/LOT/Verfall)", height=100)
+methode = st.text_input("Methode/Gerät")
+validation = st.text_area("Technische Validation der QC", height=100)
+bio_val = st.text_area("Biomedizinische Validation", height=100)
+transversal = st.text_area("Transversalbeurteilung", height=100)
+plausi = st.text_area("Plausibilitätskontrolle", height=100)
+extremwerte = st.text_area("Extremwerte", height=100)
+trend = st.text_area("Trend zu Vorbefunden", height=100)
+konstellation = st.text_area("Konstellationskontrolle", height=100)
 
-st.subheader("Präanalytik")
-probenmaterial = st.text_input("Probenmaterial", eintrag.get("probenmaterial", ""))
-makro = st.text_area("Makroskopische Beurteilung", eintrag.get("makro", ""))
+# ==== Speichern und Export ====
+if st.button("💾 Speichern und Exportieren"):
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-st.subheader("Analytik")
-reagenzien = st.text_area("Reagenzien (Name/LOT/Verfall)", eintrag.get("reagenzien", ""))
-qc = st.text_area("Qualitätskontrolle (Name/LOT/Verfall)", eintrag.get("qc", ""))
-methode = st.text_input("Methode/Gerät", eintrag.get("methode", ""))
-validation = st.text_area("Technische Validation der QC (Soll/Ist)", eintrag.get("validation", ""))
-
-st.subheader("Postanalytik")
-bio_val = st.text_area("Biomedizinische Validation", eintrag.get("bio_val", ""))
-transversal = st.text_area("Transversalbeurteilung (n/p↑/↓)", eintrag.get("transversal", ""))
-plausi = st.text_area("Plausibilitätskontrolle", eintrag.get("plausi", ""))
-extremwerte = st.text_area("Extremwerte", eintrag.get("extremwerte", ""))
-trend = st.text_area("Trend (zu Vorbefunden)", eintrag.get("trend", ""))
-konstellation = st.text_area("Konstellationskontrolle", eintrag.get("konstellation", ""))
-
-# ==== Speichern ====
-if st.button("💾 Eintrag speichern"):
-    daten = {
-        "id": eintrag_id if bearbeiten else f"CC_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-        "name": name,
-        "geburt": geburt,
+    neuer_eintrag = {
+        "id": f"CC_{timestamp}",
+        "patient_name": patient_name,
+        "geburtstag": geburtstag,
         "geschlecht": geschlecht,
         "groesse": groesse,
         "gewicht": gewicht,
@@ -101,16 +86,68 @@ if st.button("💾 Eintrag speichern"):
 
     if os.path.exists(dateipfad):
         df = pd.read_csv(dateipfad)
-        if bearbeiten and eintrag_id in df['id'].values:
-            df.loc[df['id'] == eintrag_id] = daten
-        else:
-            df = pd.concat([df, pd.DataFrame([daten])], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame([neuer_eintrag])], ignore_index=True)
     else:
-        df = pd.DataFrame([daten])
+        df = pd.DataFrame([neuer_eintrag])
 
     df.to_csv(dateipfad, index=False)
-    st.success("✅ Eintrag wurde gespeichert!")
+    st.success("✅ Eintrag gespeichert!")
+
+    # ==== Word erstellen ====
+    doc = Document()
+    doc.add_heading(f"Klinische Chemie Bericht", 0)
+    for k, v in neuer_eintrag.items():
+        if k not in ["id", "zeit"]:
+            doc.add_heading(k.replace("_", " ").capitalize(), level=2)
+            doc.add_paragraph(str(v))
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    filename_word = f"{timestamp}_Klinische_Chemie.docx"
+    save_path_word = os.path.join(word_ordner, filename_word)
+
+    with open(save_path_word, "wb") as out_file:
+        out_file.write(buffer.getvalue())
+
+    st.download_button(
+        label="⬇️ Word herunterladen",
+        data=buffer,
+        file_name=filename_word,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+    # ==== PDF erstellen ====
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        c = canvas.Canvas(tmp.name, pagesize=A4)
+        width, height = A4
+        x = 2 * cm
+        y = height - 2 * cm
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(x, y, f"Klinische Chemie Bericht")
+        y -= 1.5 * cm
+
+        c.setFont("Helvetica", 12)
+        for k, v in neuer_eintrag.items():
+            if k not in ["id", "zeit"]:
+                c.drawString(x, y, f"{k.replace('_', ' ').capitalize()}: {v}")
+                y -= 0.7 * cm
+                if y < 2 * cm:
+                    c.showPage()
+                    y = height - 2 * cm
+
+        c.save()
+
+        with open(tmp.name, "rb") as f:
+            st.download_button(
+                label="⬇️ PDF herunterladen",
+                data=f.read(),
+                file_name=f"{timestamp}_Klinische_Chemie.pdf",
+                mime="application/pdf"
+            )
 
 # ==== Zurück-Button ====
-if st.button("🔙 Zurück"):
+if st.button("🔙 Zurück zur Übersicht"):
     st.switch_page("pages/01_Datei.py")

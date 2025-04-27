@@ -1,92 +1,59 @@
 import streamlit as st
-from datetime import datetime
-import os
 import pandas as pd
+import os
+import io
 import base64
+from datetime import datetime
+from docx import Document
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+import tempfile
 
-# ==== Dateipfad definieren ====
+# ==== Dateipfad und Ordner definieren ====
 dateipfad = "data/data_chemie.csv"
+word_ordner = "data/word_chemie"
 os.makedirs("data", exist_ok=True)
+os.makedirs(word_ordner, exist_ok=True)
 
-# ==== Bilder laden ====
+# ==== Icon laden ====
 def load_icon_base64(path):
     with open(path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 img_chemie = load_icon_base64("assets/chemie.png")
-img_experiment = load_icon_base64("assets/experiment.png")
-img_goal = load_icon_base64("assets/goal.png")
-img_steps = load_icon_base64("assets/steps.png")
-img_time = load_icon_base64("assets/timetable.png")
-img_question = load_icon_base64("assets/thinking-bubble.png")
-img_beschreib = load_icon_base64("assets/contract.png")
-img_mark = load_icon_base64("assets/question.png")
-img_flag = load_icon_base64("assets/goal-flag.png")
 
-# ==== Bearbeitungsmodus prüfen ====
-edit_index = st.query_params.get("edit", None)
-eintrag = {}
-bearbeiten = False
+# ==== Start ==== 
+st.set_page_config(page_title="Chemie", page_icon="🧪")
 
-if edit_index is not None and os.path.exists(dateipfad):
-    df = pd.read_csv(dateipfad)
-    try:
-        idx = int(edit_index)
-        if idx < len(df):
-            eintrag = df.iloc[idx].to_dict()
-            bearbeiten = True
-    except:
-        pass
-
-# ==== Titel ====
 st.markdown(f"""
-<h1 style='display: flex; align-items: center; gap: 24px; font-size: 40px;'>
+<h1 style='display: flex; align-items: center; gap: 24px;'>
     Chemie
     <img src='data:image/png;base64,{img_chemie}' width='50'>
 </h1>
 """, unsafe_allow_html=True)
 
-# ==== Formular-Struktur ====
-
+# ==== Formular Felder ====
 col1, col2 = st.columns([2, 1])
 with col1:
-    st.markdown("**Titel des Praktikums**")
-    titel = st.text_input("", value=eintrag.get("titel", ""), key="titel_input")
-
+    titel = st.text_input("Titel des Praktikums")
 with col2:
-    st.markdown("**Datum**")
-    datum_value = datetime.today()
-    if bearbeiten and "datum" in eintrag:
-        try:
-            datum_value = datetime.strptime(eintrag["datum"], "%Y-%m-%d")
-        except:
-            pass
-    datum = st.date_input("", value=datum_value, key="datum_input")
+    datum = st.date_input("Datum", value=datetime.today())
 
-# Beschreibung
-st.markdown("**Beschreibung des Versuchs**")
-beschreibung = st.text_area("", height=120, value=eintrag.get("beschreibung", ""), key="beschreibung_input")
-
-# Material & Fragen
+beschreibung = st.text_area("Beschreibung des Versuchs", height=120)
 col3, col4 = st.columns(2)
 with col3:
-    st.markdown("**Benötigtes Material**")
-    material = st.text_area("", height=100, value=eintrag.get("material", ""), key="material_input")
-
+    material = st.text_area("Benötigtes Material", height=100)
 with col4:
-    st.markdown("**Vorbereitung + Fragen**")
-    fragen = st.text_area("", height=100, value=eintrag.get("fragen", ""), key="fragen_input")
+    fragen = st.text_area("Vorbereitung + Fragen", height=100)
 
-# Arbeitsschritte
-st.markdown("**Arbeitsschritte**")
-arbeitsschritte = st.text_area("", height=120, value=eintrag.get("arbeitsschritte", ""), key="steps_input")
+arbeitsschritte = st.text_area("Arbeitsschritte", height=120)
+ziel = st.text_area("Ziel des Versuchs", height=100)
 
-# Ziel
-st.markdown("**Ziel des Versuchs**")
-ziel = st.text_area("", height=100, value=eintrag.get("ziel", ""), key="goal_input")
+# ==== Speichern und Export ====
+if st.button("💾 Speichern und Exportieren"):
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-# ==== Speichern-Button ====
-if st.button("💾 Eintrag speichern"):
     neuer_eintrag = {
         "titel": titel,
         "datum": datum.strftime("%Y-%m-%d"),
@@ -100,16 +67,90 @@ if st.button("💾 Eintrag speichern"):
 
     if os.path.exists(dateipfad):
         df = pd.read_csv(dateipfad)
-        if bearbeiten:
-            df.loc[int(edit_index)] = neuer_eintrag
-        else:
-            df = pd.concat([df, pd.DataFrame([neuer_eintrag])], ignore_index=True)
+        df = pd.concat([df, pd.DataFrame([neuer_eintrag])], ignore_index=True)
     else:
         df = pd.DataFrame([neuer_eintrag])
 
     df.to_csv(dateipfad, index=False)
-    st.success("✅ Eintrag wurde erfolgreich gespeichert!")
+    st.success("✅ Eintrag gespeichert!")
+
+    # ==== Word erstellen ====
+    doc = Document()
+    doc.add_heading(f"Praktikum: {titel}", 0)
+    doc.add_paragraph(f"Datum: {datum.strftime('%d.%m.%Y')}")
+    doc.add_heading("Beschreibung", level=2)
+    doc.add_paragraph(beschreibung)
+    doc.add_heading("Material", level=2)
+    doc.add_paragraph(material)
+    doc.add_heading("Vorbereitung + Fragen", level=2)
+    doc.add_paragraph(fragen)
+    doc.add_heading("Arbeitsschritte", level=2)
+    doc.add_paragraph(arbeitsschritte)
+    doc.add_heading("Ziel", level=2)
+    doc.add_paragraph(ziel)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+
+    filename_word = f"{timestamp}_{titel.replace(' ', '-')}.docx"
+    save_path_word = os.path.join(word_ordner, filename_word)
+
+    with open(save_path_word, "wb") as out_file:
+        out_file.write(buffer.getvalue())
+
+    st.download_button(
+        label="⬇️ Word herunterladen",
+        data=buffer,
+        file_name=filename_word,
+        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+    # ==== PDF erstellen ====
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        c = canvas.Canvas(tmp.name, pagesize=A4)
+        width, height = A4
+        x = 2 * cm
+        y = height - 2 * cm
+
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(x, y, f"Praktikum: {titel}")
+        y -= 1.5 * cm
+
+        c.setFont("Helvetica", 12)
+        c.drawString(x, y, f"Datum: {datum.strftime('%d.%m.%Y')}")
+        y -= 1.5 * cm
+
+        lines = [
+            ("Beschreibung", beschreibung),
+            ("Material", material),
+            ("Vorbereitung + Fragen", fragen),
+            ("Arbeitsschritte", arbeitsschritte),
+            ("Ziel", ziel)
+        ]
+
+        for title, content in lines:
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(x, y, title)
+            y -= 1 * cm
+            c.setFont("Helvetica", 12)
+            for line in content.splitlines():
+                c.drawString(x, y, line.strip())
+                y -= 0.6 * cm
+                if y < 2 * cm:
+                    c.showPage()
+                    y = height - 2 * cm
+
+        c.save()
+
+        with open(tmp.name, "rb") as f:
+            st.download_button(
+                label="⬇️ PDF herunterladen",
+                data=f.read(),
+                file_name=f"{timestamp}_{titel.replace(' ', '-')}.pdf",
+                mime="application/pdf"
+            )
 
 # ==== Zurück-Button ====
-if st.button("🔙 Zurück"):
+if st.button("🔙 Zurück zur Übersicht"):
     st.switch_page("pages/01_Datei.py")
