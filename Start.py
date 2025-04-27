@@ -15,10 +15,10 @@ st.set_page_config(
 # ===== Init Block =====
 data_manager = DataManager(fs_protocol='webdav', fs_root_folder="App_Melinja")
 login_manager = LoginManager(data_manager)
-login_manager.login_register()
 
 # ===== Login-Schutz aktivieren (direkt nach Login-Check) =====
-if st.session_state.get("authentication_status") is not True:
+if "authentication_status" not in st.session_state or st.session_state.get("authentication_status") is not True:
+    login_manager.login_register()
     st.stop()
 
 # ===== Hilfsfunktion zum Icon-Encoding =====

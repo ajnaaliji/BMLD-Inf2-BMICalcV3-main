@@ -5,7 +5,8 @@ import base64
 
 # ===== Login-Schutz =====
 if "authentication_status" not in st.session_state or not st.session_state["authentication_status"]:
-    st.switch_page("Start")
+    st.switch_page("/")  # oder explizit zur Startseite
+    st.stop()
 
 # ===== Bilder laden =====
 def load_icon_base64(path):
@@ -143,4 +144,4 @@ else:
 # ===== Zurück-Button =====
 if st.button("🔙 Zurück zur Übersicht"):
     st.session_state.ansicht = "start"
-    st.switch_page("pages/01_Datei.py")
+    st.switch_page("/")
