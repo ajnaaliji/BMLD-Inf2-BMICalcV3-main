@@ -1,5 +1,5 @@
 streamlit
-streamlit-authenticator==0.3.2
+streamlit-authenticator==0.4.0
 pandas
 webdav4
 fsspec
