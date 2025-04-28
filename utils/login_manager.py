@@ -122,7 +122,7 @@ class LoginManager:
         if st.session_state.get("authentication_status") is True:
             self.authenticator.logout("Logout")
         else:
-            self.authenticator.login('Login-Formular')
+            self.authenticator.login('Login-Formular', location='main')
             if st.session_state.get("authentication_status") is False:
                 st.error("Benutzername oder Passwort ist falsch.")
             elif st.session_state.get("authentication_status") is None:
