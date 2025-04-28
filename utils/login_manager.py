@@ -139,7 +139,7 @@ class LoginManager:
             Das Passwort muss 8–20 Zeichen lang sein und mindestens einen Großbuchstaben, 
             eine Zahl und ein Sonderzeichen @$!%*?& enthalten.
             """)
-            res = self.authenticator.register_user()
+            res = self.authenticator.register_user(preauthorization=False)  # <<< WICHTIG: preauthorization explizit setzen!
             if res is not None and res[1] is not None:
                 st.success(f"User {res[1]} erfolgreich registriert.")
                 try:
