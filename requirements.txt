@@ -1,7 +1,8 @@
 streamlit
-streamlit-authenticator
+streamlit-authenticator==0.3.2
 pandas
 webdav4
 fsspec
 matplotlib
 numpy
+pyyaml
