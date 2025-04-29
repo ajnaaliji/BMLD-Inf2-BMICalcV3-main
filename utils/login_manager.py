@@ -124,11 +124,12 @@ class LoginManager:
             with st.form("Registrierungsformular", clear_on_submit=True):
                 new_username = st.text_input("Neuer Benutzername")
                 new_name = st.text_input("Voller Name")
+                new_email = st.text_input("E-Mail-Adresse")
                 new_password = st.text_input("Passwort", type="password")
                 submitted = st.form_submit_button("Registrieren")
 
                 if submitted:
-                    if not (new_username and new_name and new_password):
+                    if not (new_username and new_name and new_email and new_password):
                         st.error("Bitte alle Felder ausfüllen.")
                     elif len(new_password) < 8:
                         st.error("Das Passwort muss mindestens 8 Zeichen lang sein.")
@@ -138,7 +139,8 @@ class LoginManager:
                         else:
                             self.authenticator.credentials["usernames"][new_username] = {
                                 "name": new_name,
-                                "password": self.authenticator._hasher.hash(new_password)
+                                "email": new_email,
+                                "password": new_password
                             }
                             self._save_auth_credentials()
                             st.success(f"Benutzer {new_username} erfolgreich registriert.")
