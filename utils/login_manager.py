@@ -104,16 +104,18 @@ class LoginManager:
                 self.register()
 
     def login(self, stop=True):
-        if st.session_state.get("authentication_status") is True:
-            self.authenticator.logout()
-        else:
-            self.authenticator.login()
-            if st.session_state.get("authentication_status") is False:
-                st.error("Benutzername oder Passwort ist falsch.")
-            elif st.session_state.get("authentication_status") is None:
-                st.warning("Bitte Benutzername und Passwort eingeben.")
-            if stop:
-                st.stop()
+        name, authentication_status, username = self.authenticator.login('Login', 'main')
+
+        if authentication_status is True:
+            st.session_state["name"] = name
+            st.session_state["username"] = username
+        elif authentication_status is False:
+            st.error("Benutzername oder Passwort ist falsch.")
+        elif authentication_status is None:
+            st.warning("Bitte Benutzername und Passwort eingeben.")
+
+        if stop:
+            st.stop()
 
     def register(self, stop=True):
         if st.session_state.get("authentication_status") is True:
