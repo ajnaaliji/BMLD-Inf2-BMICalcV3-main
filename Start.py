@@ -18,6 +18,8 @@ login_manager = LoginManager(data_manager)
 
 # ===== Login/Register anzeigen, wenn nicht eingeloggt =====
 login_manager.login_register()
+if "authentication_status" not in st.session_state or st.session_state["authentication_status"] is not True:
+    st.stop()
 
 # ===== Hilfsfunktion zum Icon-Encoding =====
 def load_icon_base64(path):

@@ -19,7 +19,7 @@ class LoginManager:
 
     def __init__(self, data_manager: DataManager = None,
                  auth_credentials_file: str = 'credentials.yaml',
-                 auth_cookie_name: str = 'bmld_inf2_streamlit_app'):
+                 auth_cookie_name: str = 'melinjaneu_app'):  # <- Cookie-Name angepasst
         if hasattr(self, 'authenticator'):
             return
 
@@ -90,18 +90,16 @@ class LoginManager:
         dh.save(self.auth_credentials_file, self.auth_credentials)
 
     def login_register(self, login_title='Login', register_title='Registrieren'):
-        if st.session_state.get("authentication_status") is True:
-            self.authenticator.logout()
-        else:
-            login_tab, register_tab = st.tabs((login_title, register_title))
-            with login_tab:
-                st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='title-row'>Laborjournal {self.img_html}</div>", unsafe_allow_html=True)
-                st.markdown('<div class="login-card">', unsafe_allow_html=True)
-                self.login(stop=False)
-                st.markdown('</div>', unsafe_allow_html=True)
-            with register_tab:
-                self.register()
+        login_tab, register_tab = st.tabs((login_title, register_title))
+        with login_tab:
+            st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='title-row'>Laborjournal {self.img_html}</div>", unsafe_allow_html=True)
+            st.markdown('<div class="login-card">', unsafe_allow_html=True)
+            self.login(stop=False)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with register_tab:
+            self.register()
 
     def login(self, stop=True):
         name, authentication_status, username = self.authenticator.login('Login', 'main')
@@ -122,31 +120,34 @@ class LoginManager:
 
         try:
             with st.form("Registrierungsformular", clear_on_submit=True):
-                new_username = st.text_input("Neuer Benutzername")
-                new_name = st.text_input("Voller Name")
+                new_username = st.text_input("Benutzername")
+                new_firstname = st.text_input("Vorname")
+                new_lastname = st.text_input("Nachname")
                 new_email = st.text_input("E-Mail-Adresse")
                 new_password = st.text_input("Passwort", type="password")
                 submitted = st.form_submit_button("Registrieren")
 
                 if submitted:
-                    if not (new_username and new_name and new_email and new_password):
+                    if not (new_username and new_firstname and new_lastname and new_email and new_password):
                         st.error("Bitte alle Felder ausfüllen.")
                     elif len(new_password) < 8:
                         st.error("Das Passwort muss mindestens 8 Zeichen lang sein.")
+                    elif new_username in self.authenticator.credentials["usernames"]:
+                        st.error("Benutzername existiert bereits.")
                     else:
-                        if new_username in self.authenticator.credentials["usernames"]:
-                            st.error("Benutzername existiert bereits.")
-                        else:
-                            hashed_password = stauth.Hasher([new_password]).generate()[0]
-                            self.authenticator.credentials["usernames"][new_username] = {
-                                "name": new_name,
-                                "email": new_email,
-                                "password": hashed_password
-                            }
+                        hashed_password = stauth.Hasher([new_password]).generate()[0]
+                        full_name = f"{new_firstname.strip()} {new_lastname.strip()}"
+                        self.authenticator.credentials["usernames"][new_username] = {
+                            "name": full_name,
+                            "first_name": new_firstname.strip(),
+                            "last_name": new_lastname.strip(),
+                            "email": new_email,
+                            "password": hashed_password
+                        }
 
-                            self._save_auth_credentials()
-                            st.success(f"Benutzer {new_username} erfolgreich registriert.")
-                            st.rerun()
+                        self._save_auth_credentials()
+                        st.success(f"Benutzer {new_username} erfolgreich registriert.")
+                        st.rerun()
         except Exception as e:
             st.error(f"Fehler bei der Registrierung: {e}")
 
