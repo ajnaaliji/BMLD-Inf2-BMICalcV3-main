@@ -118,23 +118,36 @@ class LoginManager:
             st.stop()
 
     def register(self, stop=True):
-        if st.session_state.get("authentication_status") is True:
-            self.authenticator.logout()
-        else:
-            st.info("""
-            Das Passwort muss 8–20 Zeichen lang sein und mindestens einen Großbuchstaben, 
-            eine Zahl und ein Sonderzeichen @$!%*?& enthalten.
-            """)
-            res = self.authenticator.register_user()
-            if res and res[1] is not None:
-                st.success(f"Benutzer {res[1]} erfolgreich registriert.")
-                try:
-                    self._save_auth_credentials()
-                    st.success("Zugangsdaten gespeichert.")
-                except Exception as e:
-                    st.error(f"Fehler beim Speichern: {e}")
-            if stop:
-                st.stop()
+        st.subheader("Registrieren")
+
+        try:
+            with st.form("Registrierungsformular", clear_on_submit=True):
+                new_username = st.text_input("Neuer Benutzername")
+                new_name = st.text_input("Voller Name")
+                new_password = st.text_input("Passwort", type="password")
+                submitted = st.form_submit_button("Registrieren")
+
+                if submitted:
+                    if not (new_username and new_name and new_password):
+                        st.error("Bitte alle Felder ausfüllen.")
+                    elif len(new_password) < 8:
+                        st.error("Das Passwort muss mindestens 8 Zeichen lang sein.")
+                    else:
+                        if new_username in self.authenticator.credentials["usernames"]:
+                            st.error("Benutzername existiert bereits.")
+                        else:
+                            self.authenticator.credentials["usernames"][new_username] = {
+                                "name": new_name,
+                                "password": self.authenticator._hasher.hash(new_password)
+                            }
+                            self._save_auth_credentials()
+                            st.success(f"Benutzer {new_username} erfolgreich registriert.")
+                            st.experimental_rerun()
+        except Exception as e:
+            st.error(f"Fehler bei der Registrierung: {e}")
+
+        if stop:
+            st.stop()
 
     def go_to_login(self, login_page_py_file):
         if st.session_state.get("authentication_status") is not True:
