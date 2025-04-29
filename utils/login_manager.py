@@ -137,14 +137,16 @@ class LoginManager:
                         if new_username in self.authenticator.credentials["usernames"]:
                             st.error("Benutzername existiert bereits.")
                         else:
+                            hashed_password = stauth.Hasher([new_password]).generate()[0]
                             self.authenticator.credentials["usernames"][new_username] = {
                                 "name": new_name,
                                 "email": new_email,
-                                "password": new_password
+                                "password": hashed_password
                             }
+
                             self._save_auth_credentials()
                             st.success(f"Benutzer {new_username} erfolgreich registriert.")
-                            st.experimental_rerun()
+                            st.rerun()
         except Exception as e:
             st.error(f"Fehler bei der Registrierung: {e}")
 
