@@ -17,8 +17,8 @@ data_manager = DataManager(fs_protocol='webdav', fs_root_folder="App_Melinja")
 login_manager = LoginManager(data_manager)
 
 # ===== Login/Register anzeigen, wenn nicht eingeloggt =====
-login_manager.login_register()
-if "authentication_status" not in st.session_state or st.session_state["authentication_status"] is not True:
+if st.session_state.get("authentication_status") is not True:
+    login_manager.login_register()
     st.stop()
 
 # ===== Hilfsfunktion zum Icon-Encoding =====

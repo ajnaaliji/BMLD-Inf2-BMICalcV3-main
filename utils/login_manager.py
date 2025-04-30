@@ -19,7 +19,7 @@ class LoginManager:
 
     def __init__(self, data_manager: DataManager = None,
                  auth_credentials_file: str = 'credentials.yaml',
-                 auth_cookie_name: str = 'melinjaneu_app'):  # <- Cookie-Name angepasst
+                 auth_cookie_name: str = 'melinjaneu_app'):
         if hasattr(self, 'authenticator'):
             return
 
@@ -90,19 +90,24 @@ class LoginManager:
         dh.save(self.auth_credentials_file, self.auth_credentials)
 
     def login_register(self, login_title='Login', register_title='Registrieren'):
-        login_tab, register_tab = st.tabs((login_title, register_title))
-        with login_tab:
-            st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
-            st.markdown(f"<div class='title-row'>Laborjournal {self.img_html}</div>", unsafe_allow_html=True)
-            st.markdown('<div class="login-card">', unsafe_allow_html=True)
-            self.login(stop=False)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # 👉 Login/Register Tabs nur anzeigen, wenn NICHT eingeloggt
+        if st.session_state.get("authentication_status") is not True:
+            login_tab, register_tab = st.tabs((login_title, register_title))
+            with login_tab:
+                st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='title-row'>Laborjournal {self.img_html}</div>", unsafe_allow_html=True)
+                st.markdown('<div class="login-card">', unsafe_allow_html=True)
+                self.login(stop=False)
+                st.markdown('</div>', unsafe_allow_html=True)
 
-        with register_tab:
-            self.register()
+            with register_tab:
+                self.register()
 
     def login(self, stop=True):
         name, authentication_status, username = self.authenticator.login('Login', 'main')
+
+        # 🟢 NEU: authentication_status speichern!
+        st.session_state["authentication_status"] = authentication_status
 
         if authentication_status is True:
             st.session_state["name"] = name
