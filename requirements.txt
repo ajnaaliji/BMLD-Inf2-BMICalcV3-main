@@ -5,3 +5,4 @@ webdav4
 fsspec
 matplotlib
 numpy
+python-docx
