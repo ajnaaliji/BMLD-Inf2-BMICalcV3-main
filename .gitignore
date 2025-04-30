@@ -174,3 +174,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Persönliche, nutzerspezifische Dateien (nicht pushen)
+data/data_chemie_*.csv
+data/word_chemie/**/**/*.docx

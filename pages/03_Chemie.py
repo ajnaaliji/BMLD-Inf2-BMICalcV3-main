@@ -94,7 +94,15 @@ if st.button("💾 Speichern und Exportieren"):
     buffer.seek(0)
 
     filename_word = f"{timestamp}_{titel.replace(' ', '-')}.docx"
-    save_path_word = os.path.join(word_ordner, filename_word)
+    # Benutzername holen (sicherheitsgeprüft)
+    username = st.session_state.get("username", "anonymous")
+
+    # Benutzer-spezifischer Speicherordner
+    user_folder = os.path.join(word_ordner, username)
+    os.makedirs(user_folder, exist_ok=True)
+
+    # Pfad zur Datei
+    save_path_word = os.path.join(user_folder, filename_word)
 
     with open(save_path_word, "wb") as out_file:
         out_file.write(buffer.getvalue())
