@@ -102,10 +102,10 @@ if st.button("💾 Speichern und Exportieren"):
     os.makedirs(user_folder, exist_ok=True)
 
     # Pfad zur Datei
-    save_path_word = os.path.join(user_folder, filename_word)
-
-    with open(save_path_word, "wb") as out_file:
-        out_file.write(buffer.getvalue())
+    from utils.data_manager import DataManager
+    data_manager = DataManager()
+    dh = data_manager._get_data_handler(f"word_chemie/{username}")
+    dh.save(filename_word, buffer.getvalue())
 
     st.download_button(
         label="⬇️ Word herunterladen",

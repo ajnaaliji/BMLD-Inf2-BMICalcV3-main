@@ -47,7 +47,14 @@ ordner_pfade = {
     "klinische chemie": "data/word_klinische_chemie"
 }
 
-ordner = ordner_pfade.get(fach_key)
+username = st.session_state.get("username", None)
+if not username:
+    st.error("Kein Benutzername gefunden.")
+    st.stop()
+
+basis_ordner = ordner_pfade.get(fach_key)
+ordner = os.path.join(basis_ordner, username)
+
 
 # ===== Fachüberschrift mit Bild-Icon =====
 st.markdown(f"""
@@ -86,8 +93,12 @@ st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie
 # ==== Dateien auflisten ====
 # ==== Dateien auflisten ====
 # ==== Dateien auflisten ====
-if ordner and os.path.exists(ordner):
-    dateien = [f for f in os.listdir(ordner) if f.endswith(".docx")]
+from utils.data_manager import DataManager
+data_manager = DataManager()
+dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
+if dh.filesystem.exists(dh.root_path):
+    dateien = [f for f in dh.filesystem.ls(dh.root_path) if f.endswith(".docx")]
+
     if dateien:
         suchbegriff = st.text_input("🔎 Suche nach Titel oder Datum").lower()
 
@@ -125,15 +136,14 @@ if ordner and os.path.exists(ordner):
                 with col1:
                     st.markdown(f"📅 **{eintrag['datum_formatiert']}** – 📄 *{eintrag['titel']}*")
                 with col2:
-                    with open(eintrag["pfad"], "rb") as f:
-                        file_data = f.read()
+                    file_data = dh.read_binary(eintrag["dateiname"])
                     st.download_button(
-                        label="📂 Öffnen und Bearbeiten",
-                        data=file_data,
-                        file_name=eintrag["dateiname"],
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                        key=f"open_edit_{eintrag['dateiname']}"
-                    )
+                    label="📂 Öffnen und Bearbeiten",
+                    data=file_data,
+                    file_name=eintrag["dateiname"],
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    key=f"open_edit_{eintrag['dateiname']}"
+                )
         else:
             st.info("🔍 Keine passenden Einträge gefunden.")
     else:
