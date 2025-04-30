@@ -95,7 +95,8 @@ st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie
 # ==== Dateien auflisten ====
 from utils.data_manager import DataManager
 data_manager = DataManager()
-dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
+dh = data_manager._get_data_handler(f"App_Melinja/{basis_ordner}/{username}")
+st.write("🔍 Gesuchter Ordner:", dh.root_path)
 if dh.filesystem.exists(dh.root_path):
     dateien = [f for f in dh.filesystem.ls(dh.root_path) if f.endswith(".docx")]
 
