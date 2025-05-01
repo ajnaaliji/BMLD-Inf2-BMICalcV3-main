@@ -91,6 +91,20 @@ dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
 if not dh.filesystem.exists(dh.root_path):
     dh.filesystem.makedirs(dh.root_path)
 
+# === Zusätzlich: Anhang-Dateien aus separatem Ordner laden ===
+dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
+try:
+    raw_anhang = dh_anhang.filesystem.ls(dh_anhang.root_path)
+    # Nur echte Dateinamen auslesen (nicht Pfade!)
+    anhang_dateien = [
+        os.path.basename(f["name"])
+        for f in raw_anhang
+        if isinstance(f, dict) and f["name"].endswith((".pdf", ".docx"))
+    ]
+except Exception as e:
+    st.warning(f"⚠️ Fehler beim Laden der Anhänge: {e}")
+    anhang_dateien = []
+
 try:
     raw_files = dh.filesystem.ls(dh.root_path)
     dateien = [f["name"] for f in raw_files if isinstance(f, dict) and f.get("name", "").endswith(".docx")]
@@ -137,8 +151,29 @@ if dateien:
                 )
     else:
         st.info("🔍 Keine passenden Einträge gefunden.")
-else:
+elif not anhang_dateien:
     st.info("Keine gespeicherten Word-Dateien gefunden.")
+# === Anhänge anzeigen ===
+if anhang_dateien:
+    st.markdown("### 📎 Zusätzliche Anhänge (PDF / Word)")
+    for anhang in sorted(anhang_dateien):
+        anhang_name = os.path.basename(anhang)
+        col1, col2 = st.columns([6, 2])
+        with col1:
+            st.markdown(f"📁 *{anhang_name}*")
+        with col2:
+            try:
+                file_data = dh_anhang.read_binary(anhang_name)
+                mime = "application/pdf" if anhang_name.endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                st.download_button(
+                    label="⬇️ Herunterladen",
+                    data=file_data,
+                    file_name=anhang_name,
+                    mime=mime,
+                    key=f"anhang_{anhang_name}"
+                )
+            except FileNotFoundError:
+                st.error(f"❌ Datei nicht gefunden: {anhang_name}")
 
 # ===== Zurück-Button =====
 if st.button("🔙 Zurück zur Übersicht"):

@@ -9,11 +9,20 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 import tempfile
+from PIL import Image
+from docx.shared import Inches
+import uuid
 
-# ==== Dateipfad und Ordner definieren ====
-dateipfad = "data/data_chemie.csv"
+# ==== Benutzername und DataManager vorbereiten ====
+username = st.session_state.get("username", "anonymous")
+from utils.data_manager import DataManager
+data_manager = DataManager()
+dh = data_manager._get_data_handler(f"word_chemie/{username}")
+
+# ==== Dateipfade und Ordner definieren ====
+dateipfad = f"data/data_chemie_{username}.csv"
 os.makedirs(os.path.dirname(dateipfad), exist_ok=True)
-word_ordner = "word_chemie"
+word_ordner = f"word_chemie/{username}"
 os.makedirs(word_ordner, exist_ok=True)
 
 # ==== Icon laden ====
@@ -23,7 +32,7 @@ def load_icon_base64(path):
 
 img_chemie = load_icon_base64("assets/chemie.png")
 
-# ==== Start ==== 
+# ==== Start ====
 st.set_page_config(page_title="Chemie", page_icon="🧪")
 
 st.markdown(f"""
@@ -33,7 +42,7 @@ st.markdown(f"""
 </h1>
 """, unsafe_allow_html=True)
 
-# ==== Formular Felder ====
+# ==== Formularfelder ====
 col1, col2 = st.columns([2, 1])
 with col1:
     titel = st.text_input("Titel des Praktikums")
@@ -50,6 +59,42 @@ with col4:
 arbeitsschritte = st.text_area("Arbeitsschritte", height=120)
 ziel = st.text_area("Ziel des Versuchs", height=100)
 
+# ==== Bild-Upload ====
+st.markdown("### 📷 Mikroskopiebilder oder Versuchsbilder hochladen")
+uploaded_images = st.file_uploader("Wähle ein oder mehrere Bilder", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
+image_folder = f"bilder_chemie/{username}"
+dh_img = data_manager._get_data_handler(image_folder)
+os.makedirs(dh_img.root_path, exist_ok=True)
+
+if uploaded_images:
+    st.markdown("**Vorschau:**")
+    for img in uploaded_images:
+        st.image(img, use_container_width=True)
+        image_bytes = img.getvalue()
+        unique_id = uuid.uuid4().hex
+        clean_name = img.name.replace(" ", "_").replace("ä", "ae").replace("ü", "ue").replace("ö", "oe")
+        filename = f"{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}_{unique_id}_{clean_name}"
+        dh_img.save(filename, image_bytes)
+
+# ==== Upload von zusätzlichen Dateien ====
+st.markdown("### 📎 Weitere Dateien anhängen (z. B. PDF, Word)")
+uploaded_docs = st.file_uploader(
+    "Wähle PDF- oder Word-Dokumente", type=["pdf", "docx"], accept_multiple_files=True
+)
+
+anhang_ordner = f"anhang_chemie/{username}"
+dh_docs = data_manager._get_data_handler(anhang_ordner)
+os.makedirs(dh_docs.root_path, exist_ok=True)
+
+anhang_dateien = []
+if uploaded_docs:
+    for file in uploaded_docs:
+        doc_bytes = file.getvalue()
+        filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.name.replace(' ', '_')}"
+        dh_docs.save(filename, doc_bytes)
+        anhang_dateien.append(filename)
+
 # ==== Speichern und Export ====
 if st.button("💾 Speichern und Exportieren"):
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -62,7 +107,7 @@ if st.button("💾 Speichern und Exportieren"):
         "fragen": fragen,
         "arbeitsschritte": arbeitsschritte,
         "ziel": ziel,
-        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
     if os.path.exists(dateipfad):
@@ -89,22 +134,23 @@ if st.button("💾 Speichern und Exportieren"):
     doc.add_heading("Ziel", level=2)
     doc.add_paragraph(ziel)
 
+    if uploaded_images:
+        doc.add_page_break()
+        doc.add_heading("Mikroskopiebilder / Versuchsbilder", level=2)
+        for img in uploaded_images:
+            try:
+                image_pil = Image.open(img)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    image_pil.save(tmp_img.name)
+                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+            except Exception as e:
+                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {img.name} ({e})")
+
     buffer = io.BytesIO()
     doc.save(buffer)
     buffer.seek(0)
 
     filename_word = f"{timestamp}_{titel.replace(' ', '-')}.docx"
-    # Benutzername holen (sicherheitsgeprüft)
-    username = st.session_state.get("username", "anonymous")
-
-    # Benutzer-spezifischer Speicherordner
-    user_folder = os.path.join(word_ordner, username)
-    os.makedirs(user_folder, exist_ok=True)
-
-    # Pfad zur Datei
-    from utils.data_manager import DataManager
-    data_manager = DataManager()
-    dh = data_manager._get_data_handler(f"word_chemie/{username}")
     dh.save(filename_word, buffer.getvalue())
 
     st.download_button(

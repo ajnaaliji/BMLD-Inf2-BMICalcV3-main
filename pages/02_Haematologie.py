@@ -6,12 +6,13 @@ import os
 import io
 import tempfile
 import pandas as pd
+from docx.shared import Inches
+from PIL import Image
 
 from docx import Document
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
-
 
 st.set_page_config(page_title="Blutbilddifferenzierung", page_icon="🩸")
 
@@ -31,7 +32,6 @@ img_title = load_icon_base64("assets/blood-count.png")
 img_blood = load_icon_base64("assets/blood.png")
 
 from utils.data_manager import DataManager
-import pandas as pd
 
 titel_key = "haema_titel"
 fach = "Hämatologie"  # oder falls du `query_params` nutzen willst: auslesen wie früher
@@ -237,6 +237,27 @@ if fehlende:
         st.markdown(f"- {f}")
     st.stop()
 
+# ===== Bild-Upload vor dem Speichern =====
+st.markdown("### 📷 Mikroskopiebilder oder Befundfotos hochladen")
+
+uploaded_images = st.file_uploader("Wähle ein oder mehrere Bilder", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+
+if uploaded_images:
+    st.markdown("**Vorschau:**")
+    for img in uploaded_images:
+        st.image(img, use_container_width=True)
+
+    # Bilder speichern benutzerspezifisch (z. B. für Hämatologie)
+    username = st.session_state.get("username", "anonymous")
+    image_folder = f"bilder_haematologie/{username}"
+    os.makedirs(image_folder, exist_ok=True)
+
+    for img in uploaded_images:
+        image_bytes = img.getvalue()
+        filename = f"{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}_{img.name}"
+        dh = data_manager._get_data_handler(image_folder)
+        dh.save(filename, image_bytes)
+
 # === SPEICHERN & EXPORT VORBEREITUNG ===
 if st.button("💾 Speichern und Exportieren"):
     timestamp = pd.Timestamp.now().strftime("%Y%m%d%H%M%S")
@@ -299,6 +320,20 @@ if st.button("💾 Speichern und Exportieren"):
     add_section(doc, "Neutrophile Granulozyten", eintrag["granulo"], eintrag["notizen"]["granulo"])
     add_section(doc, "Lymphozytenveränderungen", eintrag["lympho"], eintrag["notizen"]["lympho"])
     add_section(doc, "Thrombozyten", eintrag["thrombo"], eintrag["notizen"]["thrombo"])
+
+# 📷 Bilder ins Word-Dokument einfügen
+    if uploaded_images:
+        doc.add_page_break()
+        doc.add_heading("Mikroskopiebilder / Befundfotos", level=2)
+        for img in uploaded_images:
+            # Temporäre Datei anlegen
+            try:
+                image_pil = Image.open(img)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    image_pil.save(tmp_img.name)
+                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+            except Exception as e:
+                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {img.name} ({e})")
 
     # === Word speichern in Puffer
     buffer_word = io.BytesIO()
