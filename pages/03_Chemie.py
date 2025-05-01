@@ -12,6 +12,7 @@ import tempfile
 
 # ==== Dateipfad und Ordner definieren ====
 dateipfad = "data/data_chemie.csv"
+os.makedirs(os.path.dirname(dateipfad), exist_ok=True)
 word_ordner = "word_chemie"
 os.makedirs(word_ordner, exist_ok=True)
 
