@@ -12,8 +12,7 @@ import tempfile
 
 # ==== Dateipfad und Ordner definieren ====
 dateipfad = "data/data_chemie.csv"
-word_ordner = "data/word_chemie"
-os.makedirs("data", exist_ok=True)
+word_ordner = "word_chemie"
 os.makedirs(word_ordner, exist_ok=True)
 
 # ==== Icon laden ====
