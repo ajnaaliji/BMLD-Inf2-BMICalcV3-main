@@ -237,8 +237,8 @@ if fehlende:
         st.markdown(f"- {f}")
     st.stop()
 
-# === ZUERST: Word speichern und exportieren ===
-if st.button("📝 Eintrag speichern und als Word exportieren"):
+# === SPEICHERN & EXPORT VORBEREITUNG ===
+if st.button("💾 Speichern und Exportieren"):
     timestamp = pd.Timestamp.now().strftime("%Y%m%d%H%M%S")
 
     eintrag = {
@@ -264,7 +264,7 @@ if st.button("📝 Eintrag speichern und als Word exportieren"):
     # Speichern in SWITCHdrive
     data_manager.append_record("haematologie_df", eintrag)
 
-    # Word-Dokument erstellen
+    # === WORD erstellen ===
     doc = Document()
     doc.add_heading(f"Zellzählung: {eintrag['titel']}", 0)
 
@@ -300,74 +300,55 @@ if st.button("📝 Eintrag speichern und als Word exportieren"):
     add_section(doc, "Lymphozytenveränderungen", eintrag["lympho"], eintrag["notizen"]["lympho"])
     add_section(doc, "Thrombozyten", eintrag["thrombo"], eintrag["notizen"]["thrombo"])
 
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
+    # === Word speichern in Puffer
+    buffer_word = io.BytesIO()
+    doc.save(buffer_word)
+    buffer_word.seek(0)
 
-    # Word-Download
-    st.download_button(
-        label="⬇️ Word-Dokument herunterladen",
-        data=buffer,
-        file_name=f"{timestamp}_{eintrag['titel'].replace(' ', '-')}.docx",
-        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    )
-
-    # Word-Speicherung
+    # Speichern in SWITCHdrive
     username = st.session_state.get("username", "anonymous")
     word_ordner = "word_haematologie"
     user_folder = os.path.join(word_ordner, username)
     os.makedirs(user_folder, exist_ok=True)
 
-    from utils.data_manager import DataManager
-    data_manager = DataManager()
     dh = data_manager._get_data_handler(f"{word_ordner}/{username}")
     titel = st.session_state.get(titel_key, "")
-    dh.save(f"{timestamp}_{titel.replace(' ', '-')}.docx", buffer.getvalue())
+    dh.save(f"{timestamp}_{titel.replace(' ', '-')}.docx", buffer_word.getvalue())
 
-    st.success("✅ Eintrag gespeichert und Word-Datei exportiert!")
+    # === PDF vorbereiten
+    buffer_pdf = io.BytesIO()
+    c = canvas.Canvas(buffer_pdf, pagesize=A4)
+    width, height = A4
+    x = 2 * cm
+    y = height - 2 * cm
 
-# === DANN: PDF exportieren ===
-if st.button("📄 Als PDF exportieren"):
-    eintrag = {
-        "titel": st.session_state.get(titel_key, ""),
-        "zellwerte": {zt: {
-            "z1": st.session_state.get(f"{zt}_z1", 0),
-            "z2": st.session_state.get(f"{zt}_z2", 0),
-            "avg": (st.session_state.get(f"{zt}_z1", 0) + st.session_state.get(f"{zt}_z2", 0)) / 2
-        } for zt in zelltypen},
-    }
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(x, y, f"Zellzählung: {eintrag['titel']}")
+    y -= 1.5 * cm
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        c = canvas.Canvas(tmp.name, pagesize=A4)
-        width, height = A4
-        x = 2 * cm
-        y = height - 2 * cm
+    c.setFont("Helvetica", 12)
+    c.drawString(x, y, "Zellwerte:")
+    y -= 1 * cm
 
-        c.setFont("Helvetica-Bold", 16)
-        c.drawString(x, y, f"Zellzählung: {eintrag['titel']}")
-        y -= 1.5 * cm
+    for zt, werte in eintrag["zellwerte"].items():
+        line = f"{zt}: Z1 = {werte['z1']}, Z2 = {werte['z2']}, Ø = {werte['avg']:.1f}"
+        c.drawString(x, y, line)
+        y -= 0.6 * cm
+        if y < 2 * cm:
+            c.showPage()
+            y = height - 2 * cm
 
-        c.setFont("Helvetica", 12)
-        c.drawString(x, y, "Zellwerte:")
-        y -= 1 * cm
+    c.save()
+    buffer_pdf.seek(0)
 
-        for zt, werte in eintrag["zellwerte"].items():
-            line = f"{zt}: Z1 = {werte['z1']}, Z2 = {werte['z2']}, Ø = {werte['avg']:.1f}"
-            c.drawString(x, y, line)
-            y -= 0.6 * cm
-            if y < 2 * cm:
-                c.showPage()
-                y = height - 2 * cm
+    # === Erfolgsmeldung + Downloadbuttons
+    st.success("✅ Eintrag gespeichert!")
 
-        c.save()
+    st.download_button("⬇️ Word herunterladen", buffer_word, file_name=f"{timestamp}_{titel.replace(' ', '-')}.docx",
+                       mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
-        with open(tmp.name, "rb") as f:
-            st.download_button(
-                label="⬇️ PDF herunterladen",
-                data=f.read(),
-                file_name=f"{eintrag['titel']}_Zellzaehlung.pdf",
-                mime="application/pdf"
-            )
+    st.download_button("⬇️ PDF herunterladen", buffer_pdf, file_name=f"{timestamp}_{titel.replace(' ', '-')}.pdf",
+                       mime="application/pdf")
 
 # === GANZ UNTEN: Zurück-Button ===
 st.markdown("---")
