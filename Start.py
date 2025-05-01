@@ -32,14 +32,22 @@ icon_haema = load_icon_base64("assets/blood.png")
 icon_klinik = load_icon_base64("assets/clinical_chemistry.png")
 icon_header = load_icon_base64("assets/labor.png")
 
-# ===== CSS global (z.B. Hintergrund) =====
+# ===== CSS global (Hintergrund + Textzentrierung) =====
 st.markdown("""
     <style>
         .stApp {
             background: linear-gradient(to bottom, #eaf2f8, #f5f9fc);
         }
+        h1, h2, h3, h4, h5, h6, p {
+            text-align: center;
+        }
     </style>
 """, unsafe_allow_html=True)
+
+if st.button("Logout"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
 
 # ===== Begrüßung oben rechts =====
 if "username" in st.session_state:
@@ -69,7 +77,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== Fachauswahl HTML-Karten (Klickbar über <a>) =====
+# ===== Fachauswahl HTML-Karten =====
 if st.session_state.get("authentication_status") is True:
     st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
