@@ -71,6 +71,13 @@ class LoginManager:
                 [data-baseweb="tab-list"] {
                     border-bottom: none !important;
                 }
+                h1 {
+                    text-align: center;
+                    font-size: 50px;
+                    margin-top: 50px;
+                    margin-bottom: 20px;
+                    color: #2c3e50;
+                }
             </style>
         """, unsafe_allow_html=True)
 
@@ -92,6 +99,13 @@ class LoginManager:
     def login_register(self, login_title='Login', register_title='Registrieren'):
         # 👉 Login/Register Tabs nur anzeigen, wenn NICHT eingeloggt
         if st.session_state.get("authentication_status") is not True:
+            # === Begrüßungstitel zentral anzeigen ===
+            st.markdown("""
+            <h1>
+                Herzlich willkommen in deinem Laborjournal 🧪
+            </h1>
+            """, unsafe_allow_html=True)
+
             login_tab, register_tab = st.tabs((login_title, register_title))
             with login_tab:
                 st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
