@@ -5,7 +5,7 @@ import base64
 
 # ===== Login-Schutz =====
 if "authentication_status" not in st.session_state or not st.session_state["authentication_status"]:
-    st.switch_page("/")  # oder explizit zur Startseite
+    st.switch_page("/")
     st.stop()
 
 # ===== Bilder laden =====
@@ -38,14 +38,15 @@ csv_pfade = {
     "klinische chemie": "data/data_klinische_chemie.csv"
 }
 
-fach = fach_namen.get(fach_key, "Unbekannt")
-dateipfad = csv_pfade.get(fach_key)
-fach_icon = icons.get(fach_key)
 ordner_pfade = {
     "chemie": "word_chemie",
     "haematologie": "word_haematologie",
     "klinische chemie": "word_klinische_chemie"
 }
+
+fach = fach_namen.get(fach_key, "Unbekannt")
+dateipfad = csv_pfade.get(fach_key)
+fach_icon = icons.get(fach_key)
 
 username = st.session_state.get("username", None)
 if not username:
@@ -54,7 +55,6 @@ if not username:
 
 basis_ordner = ordner_pfade.get(fach_key)
 ordner = os.path.join(basis_ordner, username)
-
 
 # ===== Fachüberschrift mit Bild-Icon =====
 st.markdown(f"""
@@ -89,68 +89,61 @@ with col3:
 
 st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie herunter.")
 
-# ==== Dateien auflisten ====
-# ==== Dateien auflisten ====
-# ==== Dateien auflisten ====
-# ==== Dateien auflisten ====
+# ===== Dateien auflisten (sicher) =====
 from utils.data_manager import DataManager
 data_manager = DataManager()
 dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
 st.write("🔍 Gesuchter Ordner:", dh.root_path)
-if dh.filesystem.exists(dh.root_path):
-    dateien = [f for f in dh.filesystem.ls(dh.root_path) if f and f.endswith(".docx")]
 
-    if dateien:
-        suchbegriff = st.text_input("🔎 Suche nach Titel oder Datum").lower()
+try:
+    raw_files = dh.filesystem.ls(dh.root_path)
+    st.write("📂 Inhalt im Ordner:", raw_files)
+    dateien = [f for f in raw_files if isinstance(f, str) and f.lower().endswith(".docx")]
+except Exception as e:
+    st.error(f"Fehler beim Lesen des Ordners: {e}")
+    dateien = []
 
-        # ALLE Einträge vorbereiten
-        anzeigen = []
-        for datei in sorted(dateien):
-            pfad = os.path.join(ordner, datei)
+if dateien:
+    suchbegriff = st.text_input("🔎 Suche nach Titel oder Datum").lower()
+
+    anzeigen = []
+    for datei in sorted(dateien):
+        pfad = os.path.join(ordner, datei)
+        try:
             rohdatum = datei.split("_")[0]
             datum_formatiert = pd.to_datetime(rohdatum, format="%Y%m%d%H%M%S").strftime("%d.%m.%Y")
             titel = datei.split("_")[1].replace(".docx", "").replace("-", " ")
+        except Exception:
+            continue  # Überspringe fehlerhafte Dateinamen
 
-            anzeigen.append({
-                "pfad": pfad,
-                "dateiname": datei,
-                "rohdatum": rohdatum,  # ← original Timestamp
-                "datum_formatiert": datum_formatiert,  # ← für die Anzeige
-                "titel": titel
-            })
+        anzeigen.append({
+            "pfad": pfad,
+            "dateiname": datei,
+            "rohdatum": rohdatum,
+            "datum_formatiert": datum_formatiert,
+            "titel": titel
+        })
 
-        # FILTER
-        gefiltert = []
-        for eintrag in anzeigen:
-            # Suche muss auf ALLES möglich sein
-            if (
-                suchbegriff in eintrag["datum_formatiert"].lower() or
-                suchbegriff in eintrag["rohdatum"] or
-                suchbegriff in eintrag["titel"].lower()
-            ):
-                gefiltert.append(eintrag)
+    gefiltert = [e for e in anzeigen if suchbegriff in e["datum_formatiert"].lower() or suchbegriff in e["rohdatum"] or suchbegriff in e["titel"].lower()]
 
-        # Ausgabe
-        if gefiltert:
-            for eintrag in gefiltert:
-                col1, col2 = st.columns([6, 2])
-                with col1:
-                    st.markdown(f"📅 **{eintrag['datum_formatiert']}** – 📄 *{eintrag['titel']}*")
-                with col2:
-                    file_data = dh.read_binary(eintrag["dateiname"])
-                    st.download_button(
+    if gefiltert:
+        for eintrag in gefiltert:
+            col1, col2 = st.columns([6, 2])
+            with col1:
+                st.markdown(f"📅 **{eintrag['datum_formatiert']}** – 📄 *{eintrag['titel']}*")
+            with col2:
+                file_data = dh.read_binary(eintrag["dateiname"])
+                st.download_button(
                     label="📂 Öffnen und Bearbeiten",
                     data=file_data,
                     file_name=eintrag["dateiname"],
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     key=f"open_edit_{eintrag['dateiname']}"
                 )
-        else:
-            st.info("🔍 Keine passenden Einträge gefunden.")
     else:
-        st.info("Keine gespeicherten Word-Dateien gefunden.")
+        st.info("🔍 Keine passenden Einträge gefunden.")
 else:
-    st.error("Ordner für gespeicherte Dateien existiert nicht.")
+    st.info("Keine gespeicherten Word-Dateien gefunden.")
 
 # ===== Zurück-Button =====
 if st.button("🔙 Zurück zur Übersicht"):
