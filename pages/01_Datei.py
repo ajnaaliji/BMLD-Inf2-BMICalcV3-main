@@ -97,7 +97,6 @@ st.write("🔍 Gesuchter Ordner:", dh.root_path)
 
 try:
     raw_files = dh.filesystem.ls(dh.root_path)
-    st.write("📂 Inhalt im Ordner:", raw_files)
     dateien = [f["name"] for f in raw_files if isinstance(f, dict) and f.get("name", "").endswith(".docx")]
 except Exception as e:
     st.error(f"Fehler beim Lesen des Ordners: {e}")
