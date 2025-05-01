@@ -32,12 +32,6 @@ fach_namen = {
     "klinische chemie": "Klinische Chemie"
 }
 
-csv_pfade = {
-    "chemie": "data/data_chemie.csv",
-    "haematologie": "data/data_haematologie.csv",
-    "klinische chemie": "data/data_klinische_chemie.csv"
-}
-
 ordner_pfade = {
     "chemie": "word_chemie",
     "haematologie": "word_haematologie",
@@ -45,7 +39,6 @@ ordner_pfade = {
 }
 
 fach = fach_namen.get(fach_key, "Unbekannt")
-dateipfad = csv_pfade.get(fach_key)
 fach_icon = icons.get(fach_key)
 
 username = st.session_state.get("username", None)
@@ -93,6 +86,10 @@ st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie
 from utils.data_manager import DataManager
 data_manager = DataManager()
 dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
+
+# Ordner automatisch erstellen, falls nicht vorhanden
+if not dh.filesystem.exists(dh.root_path):
+    dh.filesystem.makedirs(dh.root_path)
 
 try:
     raw_files = dh.filesystem.ls(dh.root_path)
