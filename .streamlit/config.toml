@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#4a90e2"
+backgroundColor = "#eef2fa"  # dezentes Graublau mit Lavendel-Touch
+secondaryBackgroundColor = "#f8f9fc"  # fast weiß
+textColor = "#2c3e50"
+font = "sans serif"

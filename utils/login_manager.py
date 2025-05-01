@@ -37,11 +37,14 @@ class LoginManager:
             self.auth_cookie_key
         )
 
-        # CSS Styling
         st.markdown("""
             <style>
-                .stApp {
-                    background-color: #eaf2f8;
+                html, body, .stApp {
+                    background: linear-gradient(to bottom, #dceeff, #f5faff) !important;
+                }
+                .block-container {
+                    background-color: rgba(255, 255, 255, 0.0) !important;
+                    padding-top: 2rem;
                 }
                 .header-text {
                     text-align: center;
@@ -71,20 +74,13 @@ class LoginManager:
                 [data-baseweb="tab-list"] {
                     border-bottom: none !important;
                 }
-                h1 {
-                    text-align: center;
-                    font-size: 50px;
-                    margin-top: 50px;
-                    margin-bottom: 20px;
-                    color: #2c3e50;
-                }
             </style>
         """, unsafe_allow_html=True)
 
         try:
             with open("assets/labor.png", "rb") as f:
                 image_data = f.read()
-                self.img_html = f'<img src="data:image/png;base64,{base64.b64encode(image_data).decode("utf-8")}" width="32" style="vertical-align: middle;">'
+                self.img_html = f'<img src="data:image/png;base64,{base64.b64encode(image_data).decode("utf-8")}" width="48" style="vertical-align: middle;">'
         except Exception:
             self.img_html = ""
 
@@ -99,17 +95,15 @@ class LoginManager:
     def login_register(self, login_title='Login', register_title='Registrieren'):
         # 👉 Login/Register Tabs nur anzeigen, wenn NICHT eingeloggt
         if st.session_state.get("authentication_status") is not True:
-            # === Begrüßungstitel zentral anzeigen ===
-            st.markdown("""
-            <h1>
-                Herzlich willkommen in deinem Laborjournal 🧪
-            </h1>
-            """, unsafe_allow_html=True)
-
             login_tab, register_tab = st.tabs((login_title, register_title))
             with login_tab:
-                st.markdown("<div class='header-text'>Herzlich willkommen in deinem</div>", unsafe_allow_html=True)
-                st.markdown(f"<div class='title-row'>Laborjournal {self.img_html}</div>", unsafe_allow_html=True)
+                st.markdown(f"""
+                    <h1 style='text-align: center; font-size: 48px; margin-top: 50px; margin-bottom: 20px; color: #2c3e50;'>
+                        Herzlich willkommen in deinem<br>
+                        Laborjournal {self.img_html}
+                    </h1>
+                """, unsafe_allow_html=True)
+
                 st.markdown('<div class="login-card">', unsafe_allow_html=True)
                 self.login(stop=False)
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -178,3 +172,4 @@ class LoginManager:
             st.switch_page(login_page_py_file)
         else:
             self.authenticator.logout()
+
