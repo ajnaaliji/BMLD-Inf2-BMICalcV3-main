@@ -98,7 +98,7 @@ data_manager = DataManager()
 dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
 st.write("🔍 Gesuchter Ordner:", dh.root_path)
 if dh.filesystem.exists(dh.root_path):
-    dateien = [f for f in dh.filesystem.ls(dh.root_path) if f.endswith(".docx")]
+    dateien = [f for f in dh.filesystem.ls(dh.root_path) if f and f.endswith(".docx")]
 
     if dateien:
         suchbegriff = st.text_input("🔎 Suche nach Titel oder Datum").lower()
