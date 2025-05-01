@@ -89,7 +89,7 @@ with col3:
 
 st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie herunter.")
 
-# ===== Dateien auflisten (sicher) =====
+# ===== Dateien auflisten (WebDAV-kompatibel) =====
 from utils.data_manager import DataManager
 data_manager = DataManager()
 dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
@@ -98,7 +98,7 @@ st.write("🔍 Gesuchter Ordner:", dh.root_path)
 try:
     raw_files = dh.filesystem.ls(dh.root_path)
     st.write("📂 Inhalt im Ordner:", raw_files)
-    dateien = [f for f in raw_files if isinstance(f, str) and f.lower().endswith(".docx")]
+    dateien = [f["name"] for f in raw_files if isinstance(f, dict) and f.get("name", "").endswith(".docx")]
 except Exception as e:
     st.error(f"Fehler beim Lesen des Ordners: {e}")
     dateien = []
@@ -108,17 +108,17 @@ if dateien:
 
     anzeigen = []
     for datei in sorted(dateien):
-        pfad = os.path.join(ordner, datei)
+        pfad = os.path.join(ordner, os.path.basename(datei))
         try:
-            rohdatum = datei.split("_")[0]
+            rohdatum = os.path.basename(datei).split("_")[0]
             datum_formatiert = pd.to_datetime(rohdatum, format="%Y%m%d%H%M%S").strftime("%d.%m.%Y")
-            titel = datei.split("_")[1].replace(".docx", "").replace("-", " ")
+            titel = os.path.basename(datei).split("_")[1].replace(".docx", "").replace("-", " ")
         except Exception:
             continue  # Überspringe fehlerhafte Dateinamen
 
         anzeigen.append({
             "pfad": pfad,
-            "dateiname": datei,
+            "dateiname": os.path.basename(datei),
             "rohdatum": rohdatum,
             "datum_formatiert": datum_formatiert,
             "titel": titel
