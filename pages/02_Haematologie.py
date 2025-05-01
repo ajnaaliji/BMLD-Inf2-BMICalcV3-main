@@ -3,7 +3,15 @@ import math
 import base64
 import ast
 import os
+import io
+import tempfile
 import pandas as pd
+
+from docx import Document
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+
 
 st.set_page_config(page_title="Blutbilddifferenzierung", page_icon="🩸")
 
@@ -61,9 +69,12 @@ ly_felder = [">10% LGL", "reaktiv", "pathologisch", "lymphoplasmozytoid"]
 th_felder = ["Grosse Formen", "Riesenformen", "Agranulär"]
 
 data_manager = DataManager()
+username = st.session_state.get("username", "anonymous")
+dateipfad = f"data/data_haematologie_{username}.csv"
+os.makedirs(os.path.dirname(dateipfad), exist_ok=True)
 
-# WICHTIG: Direkt reload erzwingen
-data_manager.load_user_data("haematologie_df", "haematologie.csv", initial_value=pd.DataFrame())
+# Lade CSV benutzerspezifisch
+data_manager.load_user_data("haematologie_df", f"data_haematologie_{username}.csv", initial_value=pd.DataFrame())
 
 import ast  # Falls noch nicht ganz oben eingefügt
 
@@ -226,15 +237,6 @@ if fehlende:
         st.markdown(f"- {f}")
     st.stop()
 
-import io
-import os
-import pandas as pd
-from docx import Document
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import cm
-import tempfile
-
 # === ZUERST: Word speichern und exportieren ===
 if st.button("📝 Eintrag speichern und als Word exportieren"):
     timestamp = pd.Timestamp.now().strftime("%Y%m%d%H%M%S")
@@ -311,9 +313,16 @@ if st.button("📝 Eintrag speichern und als Word exportieren"):
     )
 
     # Word-Speicherung
-    save_path = os.path.join("data/word_haematologie", f"{timestamp}_{eintrag['titel'].replace(' ', '-')}.docx")
-    with open(save_path, "wb") as out_file:
-        out_file.write(buffer.getvalue())
+    username = st.session_state.get("username", "anonymous")
+    word_ordner = "word_haematologie"
+    user_folder = os.path.join(word_ordner, username)
+    os.makedirs(user_folder, exist_ok=True)
+
+    from utils.data_manager import DataManager
+    data_manager = DataManager()
+    dh = data_manager._get_data_handler(f"{word_ordner}/{username}")
+    titel = st.session_state.get(titel_key, "")
+    dh.save(f"{timestamp}_{titel.replace(' ', '-')}.docx", buffer.getvalue())
 
     st.success("✅ Eintrag gespeichert und Word-Datei exportiert!")
 

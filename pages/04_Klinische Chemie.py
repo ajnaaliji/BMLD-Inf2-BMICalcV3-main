@@ -10,11 +10,15 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 import tempfile
 
-# ==== Dateipfad und Ordner definieren ====
-dateipfad = "data/data_klinische_chemie.csv"
-word_ordner = "data/word_klinische_chemie"
-os.makedirs("data", exist_ok=True)
-os.makedirs(word_ordner, exist_ok=True)
+# ==== Benutzername und DataManager vorbereiten ====
+username = st.session_state.get("username", "anonymous")
+from utils.data_manager import DataManager
+data_manager = DataManager()
+dh = data_manager._get_data_handler(f"word_klinische_chemie/{username}")
+
+# ==== CSV benutzerspezifisch definieren ====
+dateipfad = f"data/data_klinische_chemie_{username}.csv"
+os.makedirs(os.path.dirname(dateipfad), exist_ok=True)
 
 # ==== Icon laden ====
 def load_icon_base64(path):
@@ -33,7 +37,7 @@ st.markdown(f"""
 </h1>
 """, unsafe_allow_html=True)
 
-# ==== Formular Felder ====
+# ==== Formularfelder ====
 col1, col2 = st.columns(2)
 with col1:
     patient_name = st.text_input("Patientenname")
@@ -84,18 +88,18 @@ if st.button("💾 Speichern und Exportieren"):
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
+    # ==== CSV speichern ====
     if os.path.exists(dateipfad):
         df = pd.read_csv(dateipfad)
         df = pd.concat([df, pd.DataFrame([neuer_eintrag])], ignore_index=True)
     else:
         df = pd.DataFrame([neuer_eintrag])
-
     df.to_csv(dateipfad, index=False)
     st.success("✅ Eintrag gespeichert!")
 
     # ==== Word erstellen ====
     doc = Document()
-    doc.add_heading(f"Klinische Chemie Bericht", 0)
+    doc.add_heading("Klinische Chemie Bericht", 0)
     for k, v in neuer_eintrag.items():
         if k not in ["id", "zeit"]:
             doc.add_heading(k.replace("_", " ").capitalize(), level=2)
@@ -106,10 +110,7 @@ if st.button("💾 Speichern und Exportieren"):
     buffer.seek(0)
 
     filename_word = f"{timestamp}_Klinische_Chemie.docx"
-    save_path_word = os.path.join(word_ordner, filename_word)
-
-    with open(save_path_word, "wb") as out_file:
-        out_file.write(buffer.getvalue())
+    dh.save(filename_word, buffer.getvalue())
 
     st.download_button(
         label="⬇️ Word herunterladen",
@@ -126,7 +127,7 @@ if st.button("💾 Speichern und Exportieren"):
         y = height - 2 * cm
 
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(x, y, f"Klinische Chemie Bericht")
+        c.drawString(x, y, "Klinische Chemie Bericht")
         y -= 1.5 * cm
 
         c.setFont("Helvetica", 12)
@@ -137,7 +138,6 @@ if st.button("💾 Speichern und Exportieren"):
                 if y < 2 * cm:
                     c.showPage()
                     y = height - 2 * cm
-
         c.save()
 
         with open(tmp.name, "rb") as f:
