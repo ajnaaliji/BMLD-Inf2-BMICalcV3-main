@@ -32,7 +32,7 @@ def load_icon_base64(path):
 
 img_chemie = load_icon_base64("assets/chemie.png")
 
-# ==== Start ====
+# ==== Startseite ====
 st.set_page_config(page_title="Chemie", page_icon="🧪")
 
 st.markdown(f"""
@@ -62,6 +62,7 @@ ziel = st.text_area("Ziel des Versuchs", height=100)
 # ==== Bild-Upload ====
 st.markdown("### 📷 Mikroskopiebilder oder Versuchsbilder hochladen")
 uploaded_images = st.file_uploader("Wähle ein oder mehrere Bilder", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
+temp_uploaded_images = []
 
 image_folder = f"bilder_chemie/{username}"
 dh_img = data_manager._get_data_handler(image_folder)
@@ -69,36 +70,60 @@ os.makedirs(dh_img.root_path, exist_ok=True)
 
 if uploaded_images:
     st.markdown("**Vorschau:**")
+    bestehende_bilder = [f["name"] for f in dh_img.filesystem.ls(dh_img.root_path)]
+
     for img in uploaded_images:
         st.image(img, use_container_width=True)
         image_bytes = img.getvalue()
-        unique_id = uuid.uuid4().hex
         clean_name = img.name.replace(" ", "_").replace("ä", "ae").replace("ü", "ue").replace("ö", "oe")
-        filename = f"{pd.Timestamp.now().strftime('%Y%m%d%H%M%S')}_{unique_id}_{clean_name}"
-        dh_img.save(filename, image_bytes)
 
-# ==== Upload von zusätzlichen Dateien ====
+        # Noch nicht speichern – nur merken
+        if any(f.endswith(clean_name) for f in bestehende_bilder):
+            st.info(f"⏭️ Bild bereits vorhanden: {clean_name}")
+            continue
+        temp_uploaded_images.append((clean_name, image_bytes))
+
+# ==== Weitere Dateien anhängen (PDF/Word) ====
 st.markdown("### 📎 Weitere Dateien anhängen (z. B. PDF, Word)")
-uploaded_docs = st.file_uploader(
-    "Wähle PDF- oder Word-Dokumente", type=["pdf", "docx"], accept_multiple_files=True
-)
+uploaded_docs = st.file_uploader("Wähle PDF- oder Word-Dokumente", type=["pdf", "docx"], accept_multiple_files=True)
 
 anhang_ordner = f"anhang_chemie/{username}"
 dh_docs = data_manager._get_data_handler(anhang_ordner)
 os.makedirs(dh_docs.root_path, exist_ok=True)
+if not dh_docs.filesystem.exists(dh_docs.root_path):
+    dh_docs.filesystem.makedirs(dh_docs.root_path)
 
 anhang_dateien = []
+temp_uploads = []
 if uploaded_docs:
     for file in uploaded_docs:
-        doc_bytes = file.getvalue()
-        filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{file.name.replace(' ', '_')}"
-        dh_docs.save(filename, doc_bytes)
-        anhang_dateien.append(filename)
+        temp_uploads.append((file.name, file.getvalue()))
 
-# ==== Speichern und Export ====
+# ==== Speichern und Exportieren ====
 if st.button("💾 Speichern und Exportieren"):
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
+    # Bilder jetzt wirklich speichern
+    bestehende_bilder = [f["name"] for f in dh_img.filesystem.ls(dh_img.root_path)]
+    for name, img_bytes in temp_uploaded_images:
+        if not any(f.endswith(name) for f in bestehende_bilder):
+            unique_id = uuid.uuid4().hex
+            filename = f"{timestamp}_{unique_id}_{name}"
+            dh_img.save(filename, img_bytes)
+
+    # Anhänge speichern
+    bestehende = [f["name"] for f in dh_docs.filesystem.ls(dh_docs.root_path)]
+    for name, content in temp_uploads:
+        name_clean = name.replace(" ", "_")
+        if any(name_clean in f for f in bestehende):
+            st.info(f"⏭️ Datei bereits vorhanden: {name}")
+            continue
+        unique_id = uuid.uuid4().hex[:8]
+        filename = f"{timestamp}_{unique_id}_{name_clean}"
+        dh_docs.save(filename, content)
+        anhang_dateien.append(filename)
+
+    # Eintrag speichern
     neuer_eintrag = {
         "titel": titel,
         "datum": datum.strftime("%Y-%m-%d"),
@@ -107,7 +132,8 @@ if st.button("💾 Speichern und Exportieren"):
         "fragen": fragen,
         "arbeitsschritte": arbeitsschritte,
         "ziel": ziel,
-        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "anhaenge": anhang_dateien,
+        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     if os.path.exists(dateipfad):
@@ -116,10 +142,11 @@ if st.button("💾 Speichern und Exportieren"):
     else:
         df = pd.DataFrame([neuer_eintrag])
 
+    neuer_eintrag["anhaenge"] = anhang_dateien 
     df.to_csv(dateipfad, index=False)
     st.success("✅ Eintrag gespeichert!")
 
-    # ==== Word erstellen ====
+    # ==== Word generieren ====
     doc = Document()
     doc.add_heading(f"Praktikum: {titel}", 0)
     doc.add_paragraph(f"Datum: {datum.strftime('%d.%m.%Y')}")
@@ -134,17 +161,17 @@ if st.button("💾 Speichern und Exportieren"):
     doc.add_heading("Ziel", level=2)
     doc.add_paragraph(ziel)
 
-    if uploaded_images:
+    if temp_uploaded_images:
         doc.add_page_break()
         doc.add_heading("Mikroskopiebilder / Versuchsbilder", level=2)
-        for img in uploaded_images:
+        for name, img_bytes in temp_uploaded_images:
             try:
-                image_pil = Image.open(img)
+                image_pil = Image.open(io.BytesIO(img_bytes))
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
                     image_pil.save(tmp_img.name)
                     doc.add_picture(tmp_img.name, width=Inches(4.5))
             except Exception as e:
-                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {img.name} ({e})")
+                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
 
     buffer = io.BytesIO()
     doc.save(buffer)
@@ -160,22 +187,20 @@ if st.button("💾 Speichern und Exportieren"):
         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     )
 
-    # ==== PDF erstellen ====
+    # ==== PDF generieren ====
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         c = canvas.Canvas(tmp.name, pagesize=A4)
         width, height = A4
-        x = 2 * cm
-        y = height - 2 * cm
+        x, y = 2 * cm, height - 2 * cm
 
         c.setFont("Helvetica-Bold", 16)
         c.drawString(x, y, f"Praktikum: {titel}")
         y -= 1.5 * cm
-
         c.setFont("Helvetica", 12)
         c.drawString(x, y, f"Datum: {datum.strftime('%d.%m.%Y')}")
         y -= 1.5 * cm
 
-        lines = [
+        inhalte = [
             ("Beschreibung", beschreibung),
             ("Material", material),
             ("Vorbereitung + Fragen", fragen),
@@ -183,9 +208,9 @@ if st.button("💾 Speichern und Exportieren"):
             ("Ziel", ziel)
         ]
 
-        for title, content in lines:
+        for section, content in inhalte:
             c.setFont("Helvetica-Bold", 14)
-            c.drawString(x, y, title)
+            c.drawString(x, y, section)
             y -= 1 * cm
             c.setFont("Helvetica", 12)
             for line in content.splitlines():
@@ -196,15 +221,20 @@ if st.button("💾 Speichern und Exportieren"):
                     y = height - 2 * cm
 
         c.save()
+        pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
 
         with open(tmp.name, "rb") as f:
+            pdf_bytes = f.read()
+            dh_docs.save(pdf_filename, pdf_bytes)
+            anhang_dateien.append(pdf_filename)
+
             st.download_button(
                 label="⬇️ PDF herunterladen",
-                data=f.read(),
-                file_name=f"{timestamp}_{titel.replace(' ', '-')}.pdf",
+                data=pdf_bytes,
+                file_name=pdf_filename,
                 mime="application/pdf"
             )
 
-# ==== Zurück-Button ====
+# ==== Zurück zur Übersicht ====
 if st.button("🔙 Zurück zur Übersicht"):
     st.switch_page("pages/01_Datei.py")
