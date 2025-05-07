@@ -18,7 +18,10 @@ st.set_page_config(page_title="Hämatologie", page_icon="🩸")
 data_manager = DataManager()
 username = st.session_state.get("username", "anonymous")
 data_manager.load_user_data("haematologie_eintraege", f"data_haematologie_{username}.csv", initial_value=[])
-
+if not isinstance(st.session_state["haematologie_eintraege"], pd.DataFrame) or st.session_state["haematologie_eintraege"].empty:
+    st.session_state["haematologie_eintraege"] = pd.DataFrame(columns=[
+        "titel", "datum", "befund", "anhaenge", "dateiname", "zeit"
+    ])
 # ==== Word & Anhang-Verzeichnisse vorbereiten ====
 dh_word = data_manager._get_data_handler(f"word_haematologie/{username}")
 dh_img = data_manager._get_data_handler(f"bilder_haematologie/{username}")
