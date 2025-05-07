@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import os
 import io
 import base64
 from datetime import datetime
@@ -14,12 +13,13 @@ from docx.shared import Inches
 import uuid
 from utils.data_manager import DataManager
 
-# Initialisierung
+# ==== Initialisierung ====
 st.set_page_config(page_title="Chemie", page_icon="🧪")
 data_manager = DataManager()
 username = st.session_state.get("username", "anonymous")
 data_manager.load_user_data("chemie_eintraege", "data_chemie.csv", initial_value=[])
 
+# ==== DataHandler vorbereiten ====
 dh_word = data_manager._get_data_handler(f"word_chemie/{username}")
 dh_img = data_manager._get_data_handler(f"bilder_chemie/{username}")
 dh_docs = data_manager._get_data_handler(f"anhang_chemie/{username}")
@@ -42,7 +42,7 @@ st.markdown(f"""
 </h1>
 """, unsafe_allow_html=True)
 
-# ==== Formularfelder ====
+# ==== Formular ====
 col1, col2 = st.columns([2, 1])
 with col1:
     titel = st.text_input("Titel des Praktikums")
@@ -59,7 +59,7 @@ with col4:
 arbeitsschritte = st.text_area("Arbeitsschritte", height=120)
 ziel = st.text_area("Ziel des Versuchs", height=100)
 
-# ==== Bild-Upload ====
+# ==== Bilder hochladen ====
 st.markdown("### 📷 Mikroskopiebilder oder Versuchsbilder hochladen")
 uploaded_images = st.file_uploader("Wähle ein oder mehrere Bilder", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 temp_uploaded_images = []
@@ -70,19 +70,19 @@ if uploaded_images:
     for img in uploaded_images:
         st.image(img, use_container_width=True)
         image_bytes = img.getvalue()
-        clean_name = img.name.replace(" ", "_").replace("ä", "ae").replace("ü", "ue").replace("ö", "oe")
+        clean_name = img.name.replace(" ", "_").replace("\u00e4", "ae").replace("\u00fc", "ue").replace("\u00f6", "oe")
         if any(f.endswith(clean_name) for f in bestehende_bilder):
             st.info(f"⏭️ Bild bereits vorhanden: {clean_name}")
             continue
         temp_uploaded_images.append((clean_name, image_bytes))
 
-# ==== Weitere Dateien anhängen (PDF/Word) ====
-st.markdown("### 📌 Weitere Dateien anhängen (z.\u202fB. PDF, Word)")
+# ==== Anhänge ====
+st.markdown("### 📌 Weitere Dateien anhängen (z.‏B. PDF, Word)")
 uploaded_docs = st.file_uploader("Wähle PDF- oder Word-Dokumente", type=["pdf", "docx"], accept_multiple_files=True)
 temp_uploads = [(f.name, f.getvalue()) for f in uploaded_docs] if uploaded_docs else []
 anhang_dateien = []
 
-# ==== Speichern und Exportieren ====
+# ==== Speichern & Exportieren ====
 if st.button("📎 Speichern und Exportieren"):
     if not titel.strip():
         st.warning("⚠️ Bitte gib einen Titel ein.")
@@ -107,29 +107,12 @@ if st.button("📎 Speichern und Exportieren"):
         dh_docs.save(filename, content)
         anhang_dateien.append(filename)
 
-    neuer_eintrag = {
-        "titel": titel,
-        "datum": datum.strftime("%Y-%m-%d"),
-        "beschreibung": beschreibung,
-        "material": material,
-        "fragen": fragen,
-        "arbeitsschritte": arbeitsschritte,
-        "ziel": ziel,
-        "anhaenge": anhang_dateien,
-        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    st.session_state["chemie_eintraege"].append(neuer_eintrag)
-    if isinstance(st.session_state["chemie_eintraege"], list):
-        st.session_state["chemie_eintraege"] = pd.DataFrame(st.session_state["chemie_eintraege"])
-    data_manager.save_data("chemie_eintraege")
-    st.success("✅ Eintrag gespeichert!")
-
-    # ==== Word generieren ====
+    # ==== Word erstellen ====
     doc = Document()
     doc.add_heading(f"Praktikum: {titel}", 0)
     doc.add_paragraph(f"Datum: {datum.strftime('%d.%m.%Y')}")
-    for header, content in [("Beschreibung", beschreibung), ("Material", material), ("Vorbereitung + Fragen", fragen), ("Arbeitsschritte", arbeitsschritte), ("Ziel", ziel)]:
+    for header, content in [("Beschreibung", beschreibung), ("Material", material),
+                            ("Vorbereitung + Fragen", fragen), ("Arbeitsschritte", arbeitsschritte), ("Ziel", ziel)]:
         doc.add_heading(header, level=2)
         doc.add_paragraph(content)
 
@@ -148,11 +131,11 @@ if st.button("📎 Speichern und Exportieren"):
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
     word_buffer.seek(0)
-    filename_word = f"{timestamp}_{titel.replace(' ', '-')}.docx"
+    safe_title = titel.strip().replace(" ", "_").replace("/", "-").replace("\\", "-")
+    filename_word = f"{timestamp}_{safe_title}.docx"
     dh_word.save(filename_word, word_buffer.getvalue())
-    st.download_button("⬇️ Word herunterladen", data=word_buffer, file_name=filename_word, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
-    # ==== PDF generieren ====
+    # ==== PDF erstellen ====
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
         c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
         x, y = 2 * cm, A4[1] - 2 * cm
@@ -163,7 +146,8 @@ if st.button("📎 Speichern und Exportieren"):
         c.drawString(x, y, f"Datum: {datum.strftime('%d.%m.%Y')}")
         y -= 1.5 * cm
 
-        for header, content in [("Beschreibung", beschreibung), ("Material", material), ("Vorbereitung + Fragen", fragen), ("Arbeitsschritte", arbeitsschritte), ("Ziel", ziel)]:
+        for header, content in [("Beschreibung", beschreibung), ("Material", material),
+                                ("Vorbereitung + Fragen", fragen), ("Arbeitsschritte", arbeitsschritte), ("Ziel", ziel)]:
             c.setFont("Helvetica-Bold", 14)
             c.drawString(x, y, header)
             y -= 1 * cm
@@ -174,14 +158,39 @@ if st.button("📎 Speichern und Exportieren"):
                 if y < 2 * cm:
                     c.showPage()
                     y = A4[1] - 2 * cm
-
         c.save()
-        pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
+        pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_title}.pdf"
         with open(tmp_pdf.name, "rb") as f:
             pdf_bytes = f.read()
             dh_docs.save(pdf_filename, pdf_bytes)
             anhang_dateien.append(pdf_filename)
-            st.download_button("⬇️ PDF herunterladen", data=pdf_bytes, file_name=pdf_filename, mime="application/pdf")
+
+    # ==== Speichern als DataFrame ====
+    neuer_eintrag = {
+        "titel": titel,
+        "datum": datum.strftime("%Y-%m-%d"),
+        "beschreibung": beschreibung,
+        "material": material,
+        "fragen": fragen,
+        "arbeitsschritte": arbeitsschritte,
+        "ziel": ziel,
+        "anhaenge": anhang_dateien,
+        "dateiname": filename_word,
+        "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    df_neu = pd.DataFrame([neuer_eintrag])
+    if isinstance(st.session_state["chemie_eintraege"], pd.DataFrame):
+        st.session_state["chemie_eintraege"] = pd.concat([st.session_state["chemie_eintraege"], df_neu], ignore_index=True)
+    else:
+        st.session_state["chemie_eintraege"] = df_neu
+
+    data_manager.save_data("chemie_eintraege")
+    st.success("✅ Eintrag gespeichert!")
+
+    st.download_button("⬇️ Word herunterladen", data=word_buffer, file_name=filename_word,
+                       mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    st.download_button("⬇️ PDF herunterladen", data=pdf_bytes, file_name=pdf_filename, mime="application/pdf")
 
 # ==== Zurück zur Übersicht ====
 if st.button("🔙 Zurück zur Übersicht"):
