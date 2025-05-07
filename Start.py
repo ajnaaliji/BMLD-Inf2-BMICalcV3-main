@@ -32,7 +32,7 @@ icon_haema = load_icon_base64("assets/blood.png")
 icon_klinik = load_icon_base64("assets/clinical_chemistry.png")
 icon_header = load_icon_base64("assets/labor.png")
 
-# ===== CSS global (Hintergrund + Textzentrierung) =====
+# ===== CSS global =====
 st.markdown("""
     <style>
         .stApp {
@@ -40,6 +40,14 @@ st.markdown("""
         }
         h1, h2, h3, h4, h5, h6, p {
             text-align: center;
+        }
+        .fachkarte {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -49,7 +57,7 @@ if st.button("Logout 🔓"):
         del st.session_state[key]
     st.rerun()
 
-# ===== Begrüßung oben rechts =====
+# ===== Begrüßung =====
 if "username" in st.session_state:
     st.markdown(f"""
         <div style='text-align: right; font-size: 20px; font-weight: bold; margin-top: 10px;'>
@@ -58,7 +66,7 @@ if "username" in st.session_state:
         </div>
     """, unsafe_allow_html=True)
 
-# ===== Titelbereich mit Icon =====
+# ===== Titelbereich =====
 st.markdown(f"""
     <div style='text-align: center; margin-top: 30px; margin-bottom: 20px;'>
         <p style='font-size: 22px; color: #666;'>Dein persönliches</p>
@@ -77,71 +85,45 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== Fachauswahl HTML-Karten =====
-if st.session_state.get("authentication_status") is True:
-    st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
+# ===== Fachauswahl mit Streamlit-Buttons =====
+st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.markdown(f"""
-            <a href="/?fach=chemie&ansicht=start" target="_self" style="text-decoration: none;">
-                <div style="
-                    background-color: #e0f7fa;
-                    padding: 20px;
-                    border-radius: 16px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    text-align: center;
-                    transition: all 0.3s ease;
-                    margin-bottom: 20px;
-                " onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'">
-                    <img src="data:image/png;base64,{icon_chemie}" width="40"><br>
-                    <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Chemie</span>
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+with col1:
+    st.markdown(f"""
+        <div class="fachkarte" style="background-color: #e0f7fa;">
+            <img src="data:image/png;base64,{icon_chemie}" width="40"><br>
+            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Chemie</span>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.button("Fach öffnen", key="chemie_btn"):
+        st.session_state["fach"] = "chemie"
+        st.session_state["ansicht"] = "start"
+        st.switch_page("pages/01_Datei.py")
 
-    with col2:
-        st.markdown(f"""
-            <a href="/?fach=haematologie&ansicht=start" target="_self" style="text-decoration: none;">
-                <div style="
-                    background-color: #fdecea;
-                    padding: 20px;
-                    border-radius: 16px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    text-align: center;
-                    transition: all 0.3s ease;
-                    margin-bottom: 20px;
-                " onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'">
-                    <img src="data:image/png;base64,{icon_haema}" width="40"><br>
-                    <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Hämatologie</span>
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
+with col2:
+    st.markdown(f"""
+        <div class="fachkarte" style="background-color: #fdecea;">
+            <img src="data:image/png;base64,{icon_haema}" width="40"><br>
+            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Hämatologie</span>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.button("Fach öffnen", key="haema_btn"):
+        st.session_state["fach"] = "haematologie"
+        st.session_state["ansicht"] = "start"
+        st.switch_page("pages/01_Datei.py")
 
-    with col3:
-        st.markdown(f"""
-            <a href="/?fach=klinische chemie&ansicht=start" target="_self" style="text-decoration: none;">
-                <div style="
-                    background-color: #e8f5e9;
-                    padding: 20px;
-                    border-radius: 16px;
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                    text-align: center;
-                    transition: all 0.3s ease;
-                    margin-bottom: 20px;
-                " onmouseover="this.style.transform='scale(1.03)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.1)'">
-                    <img src="data:image/png;base64,{icon_klinik}" width="40"><br>
-                    <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Klinische Chemie</span>
-                </div>
-            </a>
-        """, unsafe_allow_html=True)
-
-# ===== Query-Parameter auslesen und weiterleiten =====
-params = st.query_params
-if "fach" in params:
-    st.session_state["fach"] = params["fach"]
-    st.session_state["ansicht"] = params.get("ansicht", "start")
-    st.switch_page("pages/01_Datei.py")
+with col3:
+    st.markdown(f"""
+        <div class="fachkarte" style="background-color: #e8f5e9;">
+            <img src="data:image/png;base64,{icon_klinik}" width="40"><br>
+            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Klinische Chemie</span>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.button("Fach öffnen", key="klinik_btn"):
+        st.session_state["fach"] = "klinische chemie"
+        st.session_state["ansicht"] = "start"
+        st.switch_page("pages/01_Datei.py")
 
 # ===== Hinweis unten =====
 st.markdown("""

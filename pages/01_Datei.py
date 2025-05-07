@@ -49,11 +49,6 @@ if not username:
     st.error("Kein Benutzername gefunden.")
     st.stop()
 
-st.write("Aktueller Benutzer:", username)
-basis_ordner = ordner_pfade.get(fach_key)
-ordner = os.path.join(basis_ordner, username)
-
-# ===== Fachüberschrift mit Bild-Icon =====
 st.markdown(f"""
 <h1 style='display: flex; align-items: center; gap: 20px; font-size: 36px;'>
     {fach}
@@ -88,17 +83,29 @@ st.markdown("### Finde deine Einträge und passe sie bei Bedarf an oder lade sie
 
 # ===== DataManager initialisieren =====
 data_manager = DataManager()
-dh = data_manager._get_data_handler(f"{basis_ordner}/{username}")
-dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
+dh = data_manager._get_data_handler(f"{ordner_pfade.get(fach_key)}/{username}")
 
-# ===== CSV-Daten einlesen =====
-csv_path = f"data/data_chemie_{username}.csv"
-if fach_key == "chemie" and os.path.exists(csv_path):
-    eintrags_df = pd.read_csv(csv_path)
-else:
-    eintrags_df = pd.DataFrame()
+if fach_key == "chemie":
+    dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
+    data_manager.load_user_data("chemie_eintraege", "data_chemie.csv", initial_value=[])
+    eintrags_df = pd.DataFrame(st.session_state["chemie_eintraege"])
 
-# ===== Word-Dateien laden =====
+elif fach_key == "klinische chemie":
+    dh_anhang = data_manager._get_data_handler(f"anhang_klinische_chemie/{username}")
+    data_manager.load_user_data("klinische_eintraege", f"data_klinische_chemie_{username}.csv", initial_value=[])
+    eintrags_df = pd.DataFrame(st.session_state["klinische_eintraege"])
+
+elif fach_key == "haematologie":
+    dh_anhang = data_manager._get_data_handler(f"anhang_haematologie/{username}")
+    data_manager.load_user_data("haematologie_eintraege", f"data_haematologie_{username}.csv", initial_value=[])
+    eintrags_df = pd.DataFrame(st.session_state["haematologie_eintraege"])
+
+pass  # nichts weiter nötig – alles wurde bereits oben geladen
+
+if eintrags_df.empty or "titel" not in eintrags_df.columns:
+    st.info("Noch keine gültigen Einträge vorhanden.")
+    st.stop()
+
 if not dh.filesystem.exists(dh.root_path):
     dh.filesystem.makedirs(dh.root_path)
 
@@ -109,106 +116,71 @@ except Exception as e:
     st.error(f"Fehler beim Lesen des Ordners: {e}")
     dateien = []
 
-# ===== Einträge filtern und anzeigen =====
 if dateien:
     suchbegriff = st.text_input("🔎 Suche nach Titel oder Datum").lower()
     anzeigen = []
 
     for datei in sorted(dateien):
         try:
-            rohdatum = os.path.basename(datei).split("_")[0]
+            teile = os.path.basename(datei).replace(".docx", "").split("_", 2)
+            rohdatum = teile[0]
             datum_formatiert = pd.to_datetime(rohdatum, format="%Y%m%d%H%M%S").strftime("%d.%m.%Y")
-            titel = os.path.basename(datei).split("_")[1].replace(".docx", "").replace("-", " ")
+            titel = teile[2].replace("-", " ") if len(teile) > 2 else teile[-1].replace("-", " ")
+            anzeigen.append({"dateiname": datei, "rohdatum": rohdatum, "datum_formatiert": datum_formatiert, "titel": titel})
         except Exception:
             continue
 
-        anzeigen.append({
-            "dateiname": os.path.basename(datei),
-            "rohdatum": rohdatum,
-            "datum_formatiert": datum_formatiert,
-            "titel": titel
-        })
+    gefiltert = [e for e in anzeigen if suchbegriff in e["datum_formatiert"].lower() or suchbegriff in e["titel"].lower()]
 
-    gefiltert = [
-        e for e in anzeigen if suchbegriff in e["datum_formatiert"].lower() or
-        suchbegriff in e["rohdatum"] or
-        suchbegriff in e["titel"].lower()
-    ]
+    for eintrag in gefiltert:
+        col1, col2 = st.columns([6, 2])
+        with col1:
+            st.markdown(f"📅 **{eintrag['datum_formatiert']}** – 📄 *{eintrag['titel']}*")
+        with col2:
+            file_data = dh.read_binary(os.path.basename(eintrag["dateiname"]))
+            st.download_button(
+                label="📂 Öffnen und Bearbeiten",
+                data=file_data,
+                file_name=eintrag["dateiname"],
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                key=f"open_edit_{eintrag['dateiname']}"
+            )
 
-    if gefiltert:
-        for eintrag in gefiltert:
-            col1, col2 = st.columns([6, 2])
-            with col1:
-                st.markdown(f"📅 **{eintrag['datum_formatiert']}** – 📄 *{eintrag['titel']}*")
-            with col2:
-                file_data = dh.read_binary(eintrag["dateiname"])
-                st.download_button(
-                    label="📂 Öffnen und Bearbeiten",
-                    data=file_data,
-                    file_name=eintrag["dateiname"],
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    key=f"open_edit_{eintrag['dateiname']}"
-                )
+        if not eintrags_df.empty:
+            vergleichsspalte = "titel"
+            datum_spalte = "datum" if "datum" in eintrags_df.columns else "zeit"
+            match = eintrags_df[(eintrags_df[vergleichsspalte].str.strip().str.lower() == eintrag["titel"].strip().lower()) &
+                                (eintrags_df[datum_spalte].str.startswith(pd.to_datetime(eintrag["datum_formatiert"], format="%d.%m.%Y").strftime("%Y-%m-%d")))]
 
-            if not eintrags_df.empty and fach_key == "chemie":
-                match = eintrags_df[
-                    (eintrags_df["titel"].str.strip().str.lower() == eintrag["titel"].strip().lower()) &
-                    (eintrags_df["datum"] == pd.to_datetime(eintrag["datum_formatiert"], format="%d.%m.%Y").strftime("%Y-%m-%d"))
-                ]
-                if not match.empty:
-                    try:
-                        anhaenge = ast.literal_eval(match.iloc[0]["anhaenge"])
-                        file_data_displayed = {}
-                        if anhaenge:
-                            anhaenge = list(dict.fromkeys(anhaenge))
-                            st.markdown("📎 Zugehörige Anhänge:")
-                            for anhang in anhaenge:
-                                col_a1, col_a2 = st.columns([6, 2])
-                                with col_a1:
-                                    st.markdown(f"📁 *{anhang}*")
-                                with col_a2:
-                                    if not file_data_displayed.get(anhang):
-                                        file_data = None
-                                        for _ in range(3):
-                                            try:
-                                                file_data = dh_anhang.read_binary(os.path.basename(anhang))
-                                                break
-                                            except FileNotFoundError:
-                                                time.sleep(1)
+            if not match.empty:
+                try:
+                    anhaenge = ast.literal_eval(match.iloc[0].get("anhaenge", "[]"))
+                except:
+                    anhaenge = []
+                if anhaenge:
+                    st.markdown("📎 Zugehörige Anhänge:")
+                    for anhang in list(dict.fromkeys(anhaenge)):
+                        file_data = None
+                        for _ in range(3):
+                            try:
+                                file_data = dh_anhang.read_binary(os.path.basename(anhang))
+                                break
+                            except FileNotFoundError:
+                                time.sleep(1)
+                        if file_data:
+                            st.download_button(
+                                label=f"⬇️ {anhang}",
+                                data=file_data,
+                                file_name=anhang,
+                                mime="application/pdf" if anhang.endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                key=f"anhang_{anhang}"
+                            )
 
-                                        if file_data:
-                                            st.success(f"📂 Bereit zum Download: {anhang}")
-                                            st.download_button(
-                                                label="⬇️ Herunterladen",
-                                                data=file_data,
-                                                file_name=anhang,
-                                                mime="application/pdf" if anhang.endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                                key=f"anhang_{anhang}"
-                                            )
-                                            file_data_displayed[anhang] = True
-                                        else:
-                                            st.warning(f"⚠️ Datei konnte auch nach Wartezeit nicht gefunden werden: {anhang}")
-
-                    except Exception as e:
-                        st.warning(f"⚠️ Fehler beim Anzeigen der Anhänge: {e}")                        
-    else:
-        st.info("🔍 Keine passenden Einträge gefunden.")
 else:
     st.info("Keine gespeicherten Word-Dateien gefunden.")
-# ===== DEBUG: Zeige Inhalte im Anhang-Ordner =====
-if fach_key == "chemie":
-    st.markdown("---")
-    st.markdown("### 🔍 Debug: Dateien im Anhang-Ordner")
-    try:
-        files = dh_anhang.filesystem.ls(dh_anhang.root_path)
-        for f in files:
-            st.write("📁", f["name"])
-    except Exception as e:
-        st.error(f"Fehler beim Lesen des Anhang-Ordners: {e}")
 
-# ===== Zurück-Button =====
 if st.button("🔙 Zurück zur Übersicht"):
     st.session_state.ansicht = "start"
     st.switch_page("/")
 
-
+    file_data
