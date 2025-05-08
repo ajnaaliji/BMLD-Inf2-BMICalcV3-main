@@ -112,18 +112,29 @@ if eintrags_liste:
             if "bild" in data:
                 st.image(dh.read_binary(basename(data["bild"])), width=300)
 
-            # === Lösch-Logik mit Bestätigung ===
+            # === Lösch-Logik mit einfacher Bestätigung ===
             if st.button(f"🗑️ Löschen", key=f"delete_{filename}"):
-                try:
-                    dh.filesystem.delete(os.path.join(dh.root_path, basename(filename)))
-                    if "bild" in data:
-                        bild_pfad = os.path.join(dh.root_path, basename(data["bild"]))
-                        if dh.filesystem.exists(bild_pfad):
-                            dh.filesystem.delete(bild_pfad)
-                    st.success("✅ Eintrag gelöscht.")
-                    st.rerun()
-                except Exception as e:
-                    st.warning(f"⚠️ Fehler beim Löschen von {filename}: {e}")
+                st.session_state[f"confirm_delete_{filename}"] = True
+
+            if st.session_state.get(f"confirm_delete_{filename}", False):
+                st.warning(f"Möchtest du **{data['typ']}** wirklich löschen?")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("❌ Nein", key=f"cancel_{filename}"):
+                        st.session_state[f"confirm_delete_{filename}"] = False
+                        st.rerun()
+                with col2:
+                    if st.button("✅ Ja", key=f"confirm_{filename}"):
+                        try:
+                            dh.filesystem.delete(os.path.join(dh.root_path, basename(filename)))
+                            if "bild" in data:
+                                bild_pfad = os.path.join(dh.root_path, basename(data["bild"]))
+                                if dh.filesystem.exists(bild_pfad):
+                                    dh.filesystem.delete(bild_pfad)
+                            st.success("✅ Eintrag gelöscht.")
+                            st.rerun()
+                        except Exception as e:
+                            st.warning(f"⚠️ Fehler beim Löschen von {filename}: {e}")
 
             st.markdown("---")
         except Exception as e:
