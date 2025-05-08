@@ -14,7 +14,7 @@ import tempfile
 from utils.data_manager import DataManager
 
 # === Setup ===
-st.set_page_config(page_title="Zellatlas Hämatologie", page_icon="🧫")
+st.set_page_config(page_title="Zellatlas Hämatologie", page_icon="🦢")
 username = st.session_state.get("username", "anonymous")
 data_manager = DataManager()
 atlas_folder = f"zellatlas_haematologie/{username}"
@@ -37,12 +37,13 @@ bereiche = {
         "Normal", "Riesenthrombozyt", "Agranulär", "Nicht klassifizierbar (thrombo)"
     ]
 }
+
 # === Eintragsliste initialisieren ===
 if "zell_eintraege" not in st.session_state:
     st.session_state.zell_eintraege = [{}]
 
 # === Eingabeformulare anzeigen ===
-st.title("🧫 Zellatlas Hämatologie")
+st.title("🦢 Zellatlas Hämatologie")
 st.markdown("### 🧬 Zell-Einträge eingeben")
 
 for idx, eintrag in enumerate(st.session_state.zell_eintraege):
@@ -89,7 +90,11 @@ if st.button("💾 Alle Einträge speichern"):
 
 # === Gespeicherte Einträge anzeigen ===
 st.markdown("## 📚 Gespeicherte Einträge")
-eintrags_liste = [f for f in dh.filesystem.ls(dh.root_path) if f.endswith(".yaml")]
+eintrags_liste = [
+    f["name"] if isinstance(f, dict) else f
+    for f in dh.filesystem.ls(dh.root_path)
+    if (f["name"] if isinstance(f, dict) else f).endswith(".yaml")
+]
 
 if eintrags_liste:
     eintrags_liste.sort(reverse=True)
@@ -146,14 +151,13 @@ if st.button("⬇️ Gesamten Zellatlas als Word & PDF exportieren"):
         c.drawString(x, y, data["typ"])
         y -= 0.8 * cm
         c.setFont("Helvetica", 12)
-        
+
         for line in data.get("beschreibung", "").splitlines():
             c.drawString(x, y, line.strip())
             y -= 0.6 * cm
             if y < 2 * cm:
                 c.showPage()
                 y = height - 2 * cm
-    # === Bild einfügen ===
         if "bild" in data:
             try:
                 img_data = dh.read_binary(os.path.basename(data["bild"]))
