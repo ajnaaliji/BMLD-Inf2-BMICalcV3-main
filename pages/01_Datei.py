@@ -5,6 +5,7 @@ import base64
 import time
 import ast
 from utils.data_manager import DataManager
+from utils.ui_helpers import apply_theme
 
 # ===== Login-Schutz =====
 if "authentication_status" not in st.session_state or not st.session_state["authentication_status"]:
@@ -24,6 +25,7 @@ icons = {
 
 # ===== Session-Daten =====
 st.set_page_config(page_title="Fachansicht", page_icon="📂")
+apply_theme()
 fach_key = st.session_state.get("fach", "").lower().strip()
 username = st.session_state.get("username")
 

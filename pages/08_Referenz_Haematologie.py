@@ -10,9 +10,11 @@ import tempfile
 from utils.data_manager import DataManager
 from zoneinfo import ZoneInfo
 from os.path import basename
+from utils.ui_helpers import apply_theme
 
 # === Setup ===
 st.set_page_config(page_title="Zellatlas Hämatologie", page_icon="🦠")
+apply_theme()
 if "username" not in st.session_state or st.session_state["authentication_status"] is not True:
     st.error("❌ Nicht eingeloggt – bitte zuerst anmelden.")
     st.stop()

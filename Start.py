@@ -1,8 +1,8 @@
 import streamlit as st
-import pandas as pd
 import base64
 from utils.data_manager import DataManager
 from utils.login_manager import LoginManager
+from utils.ui_helpers import apply_theme
 
 # ===== Seiteneinstellungen =====
 st.set_page_config(
@@ -12,51 +12,36 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ===== Init Block =====
+# ===== Initialisierung =====
 data_manager = DataManager(fs_protocol='webdav', fs_root_folder="App_Melinja")
 login_manager = LoginManager(data_manager)
 
-# ===== Login/Register anzeigen, wenn nicht eingeloggt =====
+# ===== Theme-Schalter (nur auf Startseite nötig) =====
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+mode = st.radio("🌓 Design-Modus wählen:", ["light", "dark"], index=0 if st.session_state.theme == "light" else 1, horizontal=True)
+st.session_state.theme = mode
+
+# ===== Theme anwenden =====
+apply_theme()
+
+# ===== Login/Register =====
 if st.session_state.get("authentication_status") is not True:
     login_manager.login_register()
-
-    st.write("🔒 DEBUG: authentication_status:", st.session_state.get("authentication_status"))
-    st.write("🔒 DEBUG: username:", st.session_state.get("username"))
-    st.write("🔒 DEBUG: name:", st.session_state.get("name"))
-    
     st.stop()
 
-# ===== Hilfsfunktion zum Icon-Encoding =====
+# ===== Hilfsfunktion: Icon einlesen =====
 def load_icon_base64(path):
     with open(path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
-# ===== Icons vorbereiten =====
+# ===== Icons laden =====
 icon_chemie = load_icon_base64("assets/chemie.png")
 icon_haema = load_icon_base64("assets/blood.png")
 icon_klinik = load_icon_base64("assets/clinical_chemistry.png")
 icon_header = load_icon_base64("assets/labor.png")
 
-# ===== CSS global =====
-st.markdown("""
-    <style>
-        .stApp {
-            background: linear-gradient(to bottom, #eaf2f8, #f5f9fc);
-        }
-        h1, h2, h3, h4, h5, h6, p {
-            text-align: center;
-        }
-        .fachkarte {
-            background-color: white;
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-bottom: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
+# ===== Logout-Button =====
 if st.button("Logout 🔓"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -66,7 +51,7 @@ if st.button("Logout 🔓"):
 if "username" in st.session_state:
     st.markdown(f"""
         <div style='text-align: right; font-size: 20px; font-weight: bold; margin-top: 10px;'>
-            👋 Schön, dass du wieder da bist, <span style='color:#2c3e50;'>{st.session_state['username']}</span>!
+            👋 Hallo, <span style='color:#2c3e50;'>{st.session_state['username']}</span>!
             <div style='font-size: 16px; color: #888;'>Bereit für dein nächstes Praktikum?</div>
         </div>
     """, unsafe_allow_html=True)
@@ -90,15 +75,15 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===== Fachauswahl mit Streamlit-Buttons =====
+# ===== Fachauswahl-Karten =====
 st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(f"""
-        <div class="fachkarte" style="background-color: #e0f7fa;">
+        <div class="fachkarte">
             <img src="data:image/png;base64,{icon_chemie}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Chemie</span>
+            <span style="font-size: 18px; font-weight: bold;">Chemie</span>
         </div>
     """, unsafe_allow_html=True)
     if st.button("Fach öffnen", key="chemie_btn"):
@@ -108,9 +93,9 @@ with col1:
 
 with col2:
     st.markdown(f"""
-        <div class="fachkarte" style="background-color: #fdecea;">
+        <div class="fachkarte">
             <img src="data:image/png;base64,{icon_haema}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Hämatologie</span>
+            <span style="font-size: 18px; font-weight: bold;">Hämatologie</span>
         </div>
     """, unsafe_allow_html=True)
     if st.button("Fach öffnen", key="haema_btn"):
@@ -120,9 +105,9 @@ with col2:
 
 with col3:
     st.markdown(f"""
-        <div class="fachkarte" style="background-color: #e8f5e9;">
+        <div class="fachkarte">
             <img src="data:image/png;base64,{icon_klinik}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold; color: #2c3e50;">Klinische Chemie</span>
+            <span style="font-size: 18px; font-weight: bold;">Klinische Chemie</span>
         </div>
     """, unsafe_allow_html=True)
     if st.button("Fach öffnen", key="klinik_btn"):

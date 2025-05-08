@@ -12,9 +12,11 @@ from PIL import Image
 from docx.shared import Inches
 import uuid
 from utils.data_manager import DataManager
+from utils.ui_helpers import apply_theme
 
 # ==== Initialisierung ====
 st.set_page_config(page_title="Hämatologie", page_icon="🩸")
+apply_theme()
 data_manager = DataManager()
 username = st.session_state.get("username", "anonymous")
 data_manager.load_user_data("haematologie_eintraege", "data_haematologie.csv", initial_value=[])

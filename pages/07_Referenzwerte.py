@@ -1,7 +1,9 @@
 import streamlit as st
 import base64
+from utils.ui_helpers import apply_theme
 
 st.set_page_config(page_title="Referenzwerte", page_icon="📊")
+apply_theme()
 
 # ==== Titel und Icon ====
 def load_icon_base64(path):
