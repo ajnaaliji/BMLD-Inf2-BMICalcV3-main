@@ -50,9 +50,11 @@ with col1:
     patient_name = st.text_input("Patientenname")
     geburtstag = st.text_input("Geburtstag/Alter")
     geschlecht = st.selectbox("Geschlecht", ["", "weiblich", "männlich", "divers"])
+    semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
 with col2:
     groesse = st.text_input("Größe (cm)")
     gewicht = st.text_input("Gewicht (kg)")
+    datum = st.date_input("📅 Befunddatum", value=datetime.today())
 
 felder = {
     "vorbefunde": st.text_area("Vorbefunde", height=100),
@@ -168,15 +170,16 @@ if st.button("📁 Speichern und Exportieren"):
 
     # Speichern in CSV
     neuer_eintrag = {
-        "titel": f"Bericht vom {datetime.now().strftime('%d.%m.%Y')}",
-        "datum": datetime.now().strftime("%Y-%m-%d"),
+        "titel": patient_name if patient_name.strip() else f"Bericht vom {datum.strftime('%d.%m.%Y')}",
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "patient_name": patient_name,
         "geburtstag": geburtstag,
         "geschlecht": geschlecht,
         "groesse": groesse,
         "gewicht": gewicht,
+        "datum": datum.strftime("%Y-%m-%d"),
         "anhaenge": anhang_dateien,
+        "semester": semester,
         "dateiname": filename_word,
         **felder
     }

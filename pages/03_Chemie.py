@@ -50,6 +50,7 @@ with col1:
     titel = st.text_input("Titel des Praktikums")
 with col2:
     datum = st.date_input("Datum", value=datetime.today())
+    semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
 
 beschreibung = st.text_area("Beschreibung des Versuchs", height=120)
 col3, col4 = st.columns(2)
@@ -177,6 +178,7 @@ if st.button("📎 Speichern und Exportieren"):
         "arbeitsschritte": arbeitsschritte,
         "ziel": ziel,
         "anhaenge": anhang_dateien,
+        "semester": semester,
         "dateiname": filename_word,
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }

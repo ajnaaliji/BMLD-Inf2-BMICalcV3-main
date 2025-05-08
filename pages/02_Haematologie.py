@@ -52,6 +52,7 @@ st.markdown(f"""
 # ==== Eingabe: Titel, Datum, Befund ====
 titel = st.text_input("Titel des Befundes")
 datum = st.date_input("Datum", value=datetime.today())
+semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
 
 # ==== Zellzählung ====
 st.markdown(f"""
@@ -278,6 +279,7 @@ if st.button("📂 Speichern und Exportieren"):
         "dateiname": filename_word,
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+    neuer_eintrag["semester"] = semester
 
     df_neu = pd.DataFrame([neuer_eintrag])
     if isinstance(st.session_state["haematologie_eintraege"], pd.DataFrame):

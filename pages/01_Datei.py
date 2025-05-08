@@ -97,9 +97,27 @@ if eintrags_df.empty or "titel" not in eintrags_df.columns or "datum" not in ein
     st.stop()
 
 # ==== Suche und Anzeige ====
+# ==== Filter: Semester und Suchtext ====
+semester_filter = st.selectbox("🎓 Filter nach Semester", ["Alle", "1", "2", "3", "4", "5", "6"])
 suchbegriff = st.text_input("🔍 Suche nach Titel oder Datum").strip().lower()
+
+# 🇨🇭 Unterstützung für Schweizer Format
+if "." in suchbegriff and len(suchbegriff) == 10:
+    try:
+        tag, monat, jahr = suchbegriff.split(".")
+        suchbegriff = f"{jahr}-{monat.zfill(2)}-{tag.zfill(2)}"
+    except:
+        pass
+
 eintrags_df["suchtext"] = eintrags_df["titel"].str.lower() + " " + eintrags_df["datum"].astype(str)
-gefiltert = eintrags_df[eintrags_df["suchtext"].str.contains(suchbegriff, na=False)] if suchbegriff else eintrags_df
+
+# 🧠 Kombinierte Filterung
+gefiltert = eintrags_df.copy()
+if semester_filter != "Alle":
+    gefiltert = gefiltert[gefiltert["semester"] == semester_filter]
+if suchbegriff:
+    gefiltert = gefiltert[gefiltert["suchtext"].str.contains(suchbegriff, na=False)]
+
 
 for _, row in gefiltert.iterrows():
     col1, col2 = st.columns([6, 2])
