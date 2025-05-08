@@ -13,7 +13,10 @@ from os.path import basename
 
 # === Setup ===
 st.set_page_config(page_title="Zellatlas Hämatologie", page_icon="🦠")
-username = st.session_state.get("username", "anonymous")
+if "username" not in st.session_state or st.session_state["authentication_status"] is not True:
+    st.error("❌ Nicht eingeloggt – bitte zuerst anmelden.")
+    st.stop()
+username = st.session_state["username"]
 data_manager = DataManager()
 atlas_folder = f"zellatlas_haematologie/{username}"
 dh = data_manager._get_data_handler(atlas_folder)
