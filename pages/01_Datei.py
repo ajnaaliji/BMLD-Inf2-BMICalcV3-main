@@ -79,14 +79,26 @@ dh = data_manager._get_data_handler(f"{ordner_pfade.get(fach_key)}/{username}")
 if fach_key == "chemie":
     data_manager.load_user_data("chemie_eintraege", "data_chemie.csv", initial_value=[])
     eintrags_df = pd.DataFrame(st.session_state["chemie_eintraege"])
+    if "semester" not in eintrags_df.columns:
+        eintrags_df["semester"] = ""
+    else:
+        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
     dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
 elif fach_key == "klinische chemie":
     data_manager.load_user_data("klinische_eintraege", f"data_klinische_chemie_{username}.csv", initial_value=[])
     eintrags_df = pd.DataFrame(st.session_state["klinische_eintraege"])
+    if "semester" not in eintrags_df.columns:
+        eintrags_df["semester"] = ""
+    else:
+        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
     dh_anhang = data_manager._get_data_handler(f"anhang_klinische_chemie/{username}")
 elif fach_key == "haematologie":
     data_manager.load_user_data("haematologie_eintraege", "data_haematologie.csv", initial_value=[])
     eintrags_df = pd.DataFrame(st.session_state["haematologie_eintraege"])
+    if "semester" not in eintrags_df.columns:
+        eintrags_df["semester"] = ""
+    else:
+        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
     dh_anhang = data_manager._get_data_handler(f"anhang_haematologie/{username}")
 else:
     eintrags_df = pd.DataFrame()
