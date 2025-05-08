@@ -83,7 +83,7 @@ elif fach_key == "klinische chemie":
     eintrags_df = pd.DataFrame(st.session_state["klinische_eintraege"])
     dh_anhang = data_manager._get_data_handler(f"anhang_klinische_chemie/{username}")
 elif fach_key == "haematologie":
-    data_manager.load_user_data("haematologie_eintraege", f"data_haematologie_{username}.csv", initial_value=[])
+    data_manager.load_user_data("haematologie_eintraege", "data_haematologie.csv", initial_value=[])
     eintrags_df = pd.DataFrame(st.session_state["haematologie_eintraege"])
     dh_anhang = data_manager._get_data_handler(f"anhang_haematologie/{username}")
 else:

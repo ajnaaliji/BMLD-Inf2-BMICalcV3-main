@@ -17,11 +17,8 @@ from utils.data_manager import DataManager
 st.set_page_config(page_title="Hämatologie", page_icon="🩸")
 data_manager = DataManager()
 username = st.session_state.get("username", "anonymous")
-data_manager.load_user_data("haematologie_eintraege", f"data_haematologie_{username}.csv", initial_value=[])
-if not isinstance(st.session_state["haematologie_eintraege"], pd.DataFrame) or st.session_state["haematologie_eintraege"].empty:
-    st.session_state["haematologie_eintraege"] = pd.DataFrame(columns=[
-        "titel", "datum", "befund", "anhaenge", "dateiname", "zeit"
-    ])
+data_manager.load_user_data("haematologie_eintraege", "data_haematologie.csv", initial_value=[])
+
 # ==== Word & Anhang-Verzeichnisse vorbereiten ====
 dh_word = data_manager._get_data_handler(f"word_haematologie/{username}")
 dh_img = data_manager._get_data_handler(f"bilder_haematologie/{username}")
@@ -53,7 +50,6 @@ st.markdown(f"""
 # ==== Eingabe: Titel, Datum, Befund ====
 titel = st.text_input("Titel des Befundes")
 datum = st.date_input("Datum", value=datetime.today())
-befund = st.text_area("Zusammenfassung / Bemerkungen", height=150)
 
 # ==== Zellzählung ====
 st.markdown(f"""
@@ -235,8 +231,6 @@ if st.button("📂 Speichern und Exportieren"):
     doc = Document()
     doc.add_heading(f"Befund: {titel}", 0)
     doc.add_paragraph(f"Datum: {datum.strftime('%d.%m.%Y')}")
-    doc.add_heading("Zusammenfassung", level=2)
-    doc.add_paragraph(befund)
 
     if temp_uploaded_images:
         doc.add_page_break()
@@ -267,16 +261,6 @@ if st.button("📂 Speichern und Exportieren"):
         c.drawString(x, y, f"Datum: {datum.strftime('%d.%m.%Y')}")
         y -= 1.5 * cm
 
-        c.setFont("Helvetica-Bold", 14)
-        c.drawString(x, y, "Zusammenfassung")
-        y -= 1 * cm
-        c.setFont("Helvetica", 12)
-        for line in befund.splitlines():
-            c.drawString(x, y, line.strip())
-            y -= 0.6 * cm
-            if y < 2 * cm:
-                c.showPage()
-                y = A4[1] - 2 * cm
         c.save()
         pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
         with open(tmp_pdf.name, "rb") as f:
@@ -288,7 +272,6 @@ if st.button("📂 Speichern und Exportieren"):
     neuer_eintrag = {
         "titel": titel,
         "datum": datum.strftime("%Y-%m-%d"),
-        "befund": befund,
         "anhaenge": anhang_dateien,
         "dateiname": filename_word,
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
