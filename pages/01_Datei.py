@@ -20,7 +20,10 @@ def load_icon_base64(path):
 icons = {
     "chemie": load_icon_base64("assets/adrenaline.png"),
     "haematologie": load_icon_base64("assets/blood.png"),
-    "klinische chemie": load_icon_base64("assets/rna.png")
+    "klinische chemie": load_icon_base64("assets/rna.png"),
+    "semester": load_icon_base64("assets/semester.png"),
+    "datum": load_icon_base64("assets/calendar.png"),
+    "suchen": load_icon_base64("assets/search.png")
 }
 
 # ===== Session-Daten =====
@@ -46,17 +49,17 @@ fach_icon = icons.get(fach_key)
 st.markdown(f"""
 <h1 style='display: flex; align-items: center; gap: 20px; font-size: 36px;'>
     {fach}
-    <img src="data:image/png;base64,{fach_icon}" width="42">
+    <img src="data:image/png;base64,{fach_icon}" width="48">
 </h1>
 """, unsafe_allow_html=True)
 
 # ===== Navigation =====
 col1, col2, col3 = st.columns(3)
 with col1:
-    if st.button("🏠 Start"):
+    if st.button("Start"):
         st.switch_page("Start.py")
 with col2:
-    if st.button("📝 Neuer Eintrag"):
+    if st.button("Neuer Eintrag"):
         seiten = {
             "haematologie": "pages/02_Haematologie.py",
             "klinische chemie": "pages/04_Klinische Chemie.py",
@@ -64,9 +67,9 @@ with col2:
         }
         st.switch_page(seiten.get(fach_key, "Start.py"))
 with col3:
-    if fach_key == "haematologie" and st.button("🦮 Zellatlas"):
+    if fach_key == "haematologie" and st.button("Zellatlas"):
         st.switch_page("pages/08_Referenz_Haematologie.py")
-    elif fach_key == "klinische chemie" and st.button("📊 Referenzwerte"):
+    elif fach_key == "klinische chemie" and st.button("Referenzwerte"):
         st.switch_page("pages/07_Referenzwerte.py")
 
 st.markdown("### Finde deine Einträge und lade sie herunter.")
@@ -108,10 +111,23 @@ if eintrags_df.empty or "titel" not in eintrags_df.columns or "datum" not in ein
     st.info("Noch keine gültigen Einträge vorhanden.")
     st.stop()
 
-# ==== Suche und Anzeige ====
-# ==== Filter: Semester und Suchtext ====
-semester_filter = st.selectbox("🎓 Filter nach Semester", ["Alle", "1", "2", "3", "4", "5", "6"])
-suchbegriff = st.text_input("🔍 Suche nach Titel oder Datum").strip().lower()
+# Semesterfilter mit Icon
+st.markdown(f"""
+<div style='display: flex; align-items: center; gap: 10px; font-size: 18px; margin-top: 20px;'>
+    <img src="data:image/png;base64,{icons['semester']}" width="26">
+    <strong>Filter nach Semester</strong>
+</div>
+""", unsafe_allow_html=True)
+semester_filter = st.selectbox("", ["Alle", "1", "2", "3", "4", "5", "6"])
+
+# Suchfeld mit Icon
+st.markdown(f"""
+<div style='display: flex; align-items: center; gap: 10px; font-size: 18px; margin-top: 30px;'>
+    <img src="data:image/png;base64,{icons['suchen']}" width="26">
+    <strong>Suche nach Titel oder Datum</strong>
+</div>
+""", unsafe_allow_html=True)
+suchbegriff = st.text_input("", placeholder="z. B. Vitamin oder 2025-05-08").strip().lower()
 
 # 🇨🇭 Unterstützung für Schweizer Format
 if "." in suchbegriff and len(suchbegriff) == 10:
@@ -134,7 +150,12 @@ if suchbegriff:
 for _, row in gefiltert.iterrows():
     col1, col2 = st.columns([6, 2])
     with col1:
-        st.markdown(f"🗓️ **{row['datum']}** – 📄 *{row['titel']}*")
+        st.markdown(f"""
+        <div style='display: flex; align-items: center; gap: 10px; font-size: 16px;'>
+            <img src="data:image/png;base64,{icons['datum']}" width="24">
+            <strong>{row['datum']}</strong> – <em>{row['titel']}</em>
+        </div>
+        """, unsafe_allow_html=True)
     with col2:
         word_file = row.get("dateiname")
         if word_file:
@@ -159,7 +180,7 @@ for _, row in gefiltert.iterrows():
             anhaenge = []
 
     if anhaenge:
-        st.markdown("📌 Zugehörige Anhänge:")
+        st.markdown("Zugehörige Anhänge:")
         for anhang in list(dict.fromkeys(anhaenge)):
             file_data = None
             for _ in range(3):

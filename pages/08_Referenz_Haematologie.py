@@ -11,13 +11,29 @@ from utils.data_manager import DataManager
 from zoneinfo import ZoneInfo
 from os.path import basename
 from utils.ui_helpers import apply_theme
+import base64
+
+# ==== Icon laden ====
+def load_icon_base64(path):
+    with open(path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+    
+img_safe = load_icon_base64("assets/security.png")
+img_guide = load_icon_base64("assets/guideline.png")
+img_pic = load_icon_base64("assets/picture.png")
 
 # === Setup ===
-st.set_page_config(page_title="Zellatlas Hämatologie", page_icon="🦠")
+st.set_page_config(
+    page_title="Zellatlas Hämatologie",
+    page_icon="assets/guideline.png",  # ← Das ist der relative Pfad zur Datei
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 apply_theme()
 if "username" not in st.session_state or st.session_state["authentication_status"] is not True:
     st.error("❌ Nicht eingeloggt – bitte zuerst anmelden.")
     st.stop()
+
 username = st.session_state["username"]
 data_manager = DataManager()
 atlas_folder = f"zellatlas_haematologie/{username}"
@@ -47,14 +63,26 @@ if "zell_eintraege" not in st.session_state:
 
 # === Eingabeformulare ===
 st.title("Zellatlas Hämatologie")
-st.markdown("### 🥼 Zell-Einträge erfassen")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_guide}' width='34'>
+    Zell-Einträge erfassen
+</h3>
+""", unsafe_allow_html=True)
 
 for idx, eintrag in enumerate(st.session_state.zell_eintraege):
-    st.markdown(f"## 🔍 Eintrag {idx + 1}")
+    st.markdown(f"## Eintrag {idx + 1}")
     typ = st.selectbox("Zelltyp wählen", [f"{k}: {v}" for k in bereiche for v in bereiche[k]], key=f"typ_{idx}")
-    beschreibung = st.text_area("Beschreibung / Merkmale", key=f"beschreibung_{idx}")
-    bild = st.file_uploader("Bild hochladen (png/jpg)", type=["png", "jpg", "jpeg"], key=f"bild_{idx}")
-    st.session_state.zell_eintraege[idx] = {"typ": typ, "beschreibung": beschreibung, "bild": bild}
+    st.markdown(f"""
+    <h4 style='display: flex; align-items: center; gap: 10px; margin-top: 30px;'>
+        <img src='data:image/png;base64,{img_pic}' width='34'>
+        Bild hochladen (png/jpg)
+    </h4>
+    """, unsafe_allow_html=True)
+
+bild = st.file_uploader("", type=["png", "jpg", "jpeg"], key=f"bild_{idx}")
+beschreibung = st.text_area("Beschreibung / Merkmale", key=f"beschreibung_{idx}")
+st.session_state.zell_eintraege[idx] = {"typ": typ, "beschreibung": beschreibung, "bild": bild}
 
 # === Plus-Button ===
 st.markdown("---")
@@ -91,7 +119,12 @@ if st.button("📂 Alle Einträge speichern"):
         st.warning("⚠️ Keine gültigen Einträge zum Speichern gefunden.")
 
 # === Anzeige gespeicherter Einträge ===
-st.markdown("## 📘 Gespeicherte Zell-Einträge")
+st.markdown(f"""
+<h2 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_safe}' width='50'>
+    Gespeicherte Zell-Einträge
+</h2>
+""", unsafe_allow_html=True)
 eintrags_liste = [
     f["name"] if isinstance(f, dict) else f
     for f in dh.filesystem.ls(dh.root_path)

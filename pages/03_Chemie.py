@@ -35,6 +35,8 @@ def load_icon_base64(path):
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 img_chemie = load_icon_base64("assets/chemie.png")
+img_paper = load_icon_base64("assets/paperclip.png")
+img_pic = load_icon_base64("assets/picture.png")
 
 # ==== Titel ====
 st.markdown(f"""
@@ -63,7 +65,12 @@ arbeitsschritte = st.text_area("Arbeitsschritte", height=120)
 ziel = st.text_area("Ziel des Versuchs", height=100)
 
 # ==== Bilder hochladen ====
-st.markdown("### 📷 Mikroskopiebilder oder Versuchsbilder hochladen")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_pic}' width='40'>
+    Mikroskopiebilder oder Befundbilder
+</h3>
+""", unsafe_allow_html=True)
 uploaded_images = st.file_uploader("Wähle ein oder mehrere Bilder", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 temp_uploaded_images = []
 
@@ -80,7 +87,12 @@ if uploaded_images:
         temp_uploaded_images.append((clean_name, image_bytes))
 
 # ==== Anhänge ====
-st.markdown("### 📌 Weitere Dateien anhängen (z.‏B. PDF, Word)")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_paper}' width='40'>
+    Weitere Dateien (PDF, Word)
+</h3>
+""", unsafe_allow_html=True)
 uploaded_docs = st.file_uploader("Wähle PDF- oder Word-Dokumente", type=["pdf", "docx"], accept_multiple_files=True)
 temp_uploads = [(f.name, f.getvalue()) for f in uploaded_docs] if uploaded_docs else []
 anhang_dateien = []

@@ -35,6 +35,8 @@ def load_icon_base64(path):
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 img_icon = load_icon_base64("assets/clinical_chemistry.png")
+img_paper = load_icon_base64("assets/paperclip.png")
+img_pic = load_icon_base64("assets/picture.png")
 
 # ==== Titel ====
 st.markdown(f"""
@@ -54,7 +56,7 @@ with col1:
 with col2:
     groesse = st.text_input("Größe (cm)")
     gewicht = st.text_input("Gewicht (kg)")
-    datum = st.date_input("📅 Befunddatum", value=datetime.today())
+    datum = st.date_input("Befunddatum", value=datetime.today())
 
 felder = {
     "vorbefunde": st.text_area("Vorbefunde", height=100),
@@ -73,7 +75,12 @@ felder = {
 }
 
 # ==== Bilder uploaden ====
-st.markdown("### 📷 Mikroskopiebilder oder Befundfotos hochladen")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_pic}' width='40'>
+    Mikroskopiebilder oder Befundbilder
+</h3>
+""", unsafe_allow_html=True)
 uploaded_images = st.file_uploader("Bilder auswählen", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 temp_uploaded_images = []
 
@@ -89,7 +96,12 @@ if uploaded_images:
         temp_uploaded_images.append((name, img.getvalue()))
 
 # ==== Anhänge uploaden ====
-st.markdown("### 📌 Weitere Dateien anhängen (z. B. PDF, Word)")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_paper}' width='40'>
+    Weitere Dateien (PDF, Word)
+</h3>
+""", unsafe_allow_html=True)
 uploaded_docs = st.file_uploader("Dateien auswählen", type=["pdf", "docx"], accept_multiple_files=True)
 temp_uploads = [(f.name.replace(" ", "_"), f.getvalue()) for f in uploaded_docs] if uploaded_docs else []
 anhang_dateien = []

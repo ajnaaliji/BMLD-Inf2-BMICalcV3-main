@@ -40,8 +40,10 @@ img_lympho = load_icon_base64("assets/lymphocyte.png")
 img_platelet = load_icon_base64("assets/platelet.png")
 img_title = load_icon_base64("assets/blood-count.png")
 img_blood = load_icon_base64("assets/blood.png")
+img_paper = load_icon_base64("assets/paperclip.png")
+img_pic = load_icon_base64("assets/picture.png")
 
-# ==== Header ====
+# ==== Zellzählung ====
 st.markdown(f"""
 <h1 style='display: flex; align-items: center; gap: 24px;'>
     Hämatologie
@@ -54,13 +56,6 @@ titel = st.text_input("Titel des Befundes")
 datum = st.date_input("Datum", value=datetime.today())
 semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
 
-# ==== Zellzählung ====
-st.markdown(f"""
-<h1 style='display: flex; align-items: center; gap: 24px;'>
-    Zellzählung Hämatologie
-    <img src='data:image/png;base64,{img_blood}' width='50'>
-</h1>
-""", unsafe_allow_html=True)
 
 zelltypen = [
     "Blasten", "Promyelozyten", "Myelozyten", "Metamyelozyten",
@@ -191,7 +186,12 @@ if fehlende:
     st.stop()
 
 # ==== Bild-Upload ====
-st.markdown("### 📷 Mikroskopiebilder oder Befundbilder")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_pic}' width='40'>
+    Mikroskopiebilder oder Befundbilder
+</h3>
+""", unsafe_allow_html=True)
 uploaded_images = st.file_uploader("Bilder auswählen", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 temp_uploaded_images = []
 if uploaded_images:
@@ -206,7 +206,12 @@ if uploaded_images:
         temp_uploaded_images.append((name_clean, img.getvalue()))
 
 # ==== Datei-Upload ====
-st.markdown("### 📌 Weitere Dateien (PDF, Word)")
+st.markdown(f"""
+<h3 style='display: flex; align-items: center; gap: 10px;'>
+    <img src='data:image/png;base64,{img_paper}' width='40'>
+    Weitere Dateien (PDF, Word)
+</h3>
+""", unsafe_allow_html=True)
 uploaded_docs = st.file_uploader("Dateien auswählen", type=["pdf", "docx"], accept_multiple_files=True)
 temp_uploads = [(f.name, f.getvalue()) for f in uploaded_docs] if uploaded_docs else []
 anhang_dateien = []
