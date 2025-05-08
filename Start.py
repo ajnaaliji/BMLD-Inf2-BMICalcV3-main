@@ -19,6 +19,11 @@ login_manager = LoginManager(data_manager)
 # ===== Login/Register anzeigen, wenn nicht eingeloggt =====
 if st.session_state.get("authentication_status") is not True:
     login_manager.login_register()
+
+    st.write("🔒 DEBUG: authentication_status:", st.session_state.get("authentication_status"))
+    st.write("🔒 DEBUG: username:", st.session_state.get("username"))
+    st.write("🔒 DEBUG: name:", st.session_state.get("name"))
+    
     st.stop()
 
 # ===== Hilfsfunktion zum Icon-Encoding =====

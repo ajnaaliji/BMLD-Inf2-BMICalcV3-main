@@ -151,3 +151,4 @@ for _, row in gefiltert.iterrows():
 if st.button("🔙 Zurück zur Übersicht"):
     st.session_state.ansicht = "start"
     st.switch_page("Start.py")
+
