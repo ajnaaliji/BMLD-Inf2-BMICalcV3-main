@@ -19,11 +19,41 @@ login_manager = LoginManager(data_manager)
 # ===== Theme-Schalter (nur auf Startseite nötig) =====
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
-mode = st.radio("🌓 Design-Modus wählen:", ["light", "dark"], index=0 if st.session_state.theme == "light" else 1, horizontal=True)
+mode = st.radio("🌃 Design-Modus wählen:", ["light", "dark"], index=0 if st.session_state.theme == "light" else 1, horizontal=True)
 st.session_state.theme = mode
 
 # ===== Theme anwenden =====
 apply_theme()
+
+# ===== Custom CSS für Fachkarten und Buttons (dynamisch) =====
+if st.session_state.theme == "dark":
+    chemie_color = "#145A64"
+    haema_color = "#78281F"
+    klinik_color = "#1E8449"
+else:
+    chemie_color = "#e0f7fa"
+    haema_color = "#fdecea"
+    klinik_color = "#e8f5e9"
+
+st.markdown(f"""
+    <style>
+        .fachkarte {{
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        .themed-button > button {{
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }}
+        h1, h2, h3, h4, h5, h6, p {{
+            text-align: center;
+        }}
+    </style>
+""", unsafe_allow_html=True)
 
 # ===== Login/Register =====
 if st.session_state.get("authentication_status") is not True:
@@ -59,7 +89,7 @@ if "username" in st.session_state:
 # ===== Titelbereich =====
 st.markdown(f"""
     <div style='text-align: center; margin-top: 30px; margin-bottom: 20px;'>
-        <p style='font-size: 22px; color: #666;'>Dein persönliches</p>
+        <p style='font-size: 22px;'>Dein persönliches</p>
         <h1 style='font-size: 50px; font-weight: bold;'>
             Laborjournal <img src="data:image/png;base64,{icon_header}" width="36" style="vertical-align: middle;">
         </h1>
@@ -79,41 +109,26 @@ st.markdown("""
 st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
-with col1:
-    st.markdown(f"""
-        <div class="fachkarte">
-            <img src="data:image/png;base64,{icon_chemie}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold;">Chemie</span>
-        </div>
-    """, unsafe_allow_html=True)
-    if st.button("Fach öffnen", key="chemie_btn"):
-        st.session_state["fach"] = "chemie"
-        st.session_state["ansicht"] = "start"
-        st.switch_page("pages/01_Datei.py")
+farben = [chemie_color, haema_color, klinik_color]
+symbole = [icon_chemie, icon_haema, icon_klinik]
+namen = ["Chemie", "Hämatologie", "Klinische Chemie"]
+schluessel = ["chemie", "haematologie", "klinische chemie"]
 
-with col2:
-    st.markdown(f"""
-        <div class="fachkarte">
-            <img src="data:image/png;base64,{icon_haema}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold;">Hämatologie</span>
-        </div>
-    """, unsafe_allow_html=True)
-    if st.button("Fach öffnen", key="haema_btn"):
-        st.session_state["fach"] = "haematologie"
-        st.session_state["ansicht"] = "start"
-        st.switch_page("pages/01_Datei.py")
-
-with col3:
-    st.markdown(f"""
-        <div class="fachkarte">
-            <img src="data:image/png;base64,{icon_klinik}" width="40"><br>
-            <span style="font-size: 18px; font-weight: bold;">Klinische Chemie</span>
-        </div>
-    """, unsafe_allow_html=True)
-    if st.button("Fach öffnen", key="klinik_btn"):
-        st.session_state["fach"] = "klinische chemie"
-        st.session_state["ansicht"] = "start"
-        st.switch_page("pages/01_Datei.py")
+for col, icon, name, fach, farbe in zip([col1, col2, col3], symbole, namen, schluessel, farben):
+    with col:
+        st.markdown(f"""
+            <div class="fachkarte" style="background-color: {farbe};">
+                <img src="data:image/png;base64,{icon}" width="40"><br>
+                <span style="font-size: 18px; font-weight: bold;">{name}</span>
+            </div>
+        """, unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="themed-button">', unsafe_allow_html=True)
+            if st.button("Fach öffnen", key=f"btn_{fach}"):
+                st.session_state["fach"] = fach
+                st.session_state["ansicht"] = "start"
+                st.switch_page("pages/01_Datei.py")
+            st.markdown('</div>', unsafe_allow_html=True)
 
 # ===== Hinweis unten =====
 st.markdown("""
