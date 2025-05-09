@@ -67,7 +67,7 @@ icons = {
     "semester": load_icon_base64("assets/semester.png"),
     "datum": load_icon_base64("assets/calendar.png"),
     "suchen": load_icon_base64("assets/search.png"),
-    "ordner": load_icon_base64("assets/ordner.png")
+    "ordner": load_icon_base64("assets/datei.png")
 }
 
 
