@@ -180,35 +180,42 @@ if eintrags_liste:
 else:
     st.info("Noch keine Einträge vorhanden.")
 
-# === Neuesten Eintrag exportieren ===
+# === Alle Einträge gemeinsam exportieren ===
 if eintrags_liste:
-    neueste_datei = sorted(eintrags_liste, reverse=True)[0]
-    data = yaml.safe_load(dh.read_text(basename(neueste_datei)))
-    typ = data.get("typ", "Unbekannt")
-    beschreibung = data.get("beschreibung", "")
-    zeit_raw = data.get("zeit", "")
-    zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
-    zeit_fmt = zeit_dt.strftime("%Y-%m-%d %H:%M")
+    eintrags_liste.sort()  # Chronologische Reihenfolge
 
-    # Word exportieren
+    # === Word-Datei erstellen ===
     doc = Document()
-    doc.add_heading(f"Zellatlas-Eintrag: {typ}", 0)
-    doc.add_paragraph(f"Erstellt am: {zeit_fmt}")
-    doc.add_paragraph(beschreibung)
-    if "bild" in data:
-        try:
-            image_data = dh.read_binary(data["bild"])
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-                tmp_img.write(image_data)
-                doc.add_picture(tmp_img.name, width=Inches(4.5))
-        except:
-            st.warning("⚠️ Bild konnte nicht in Word eingefügt werden.")
+    doc.add_heading("Zellatlas Hämatologie", 0)
+
+    for datei in eintrags_liste:
+        data = yaml.safe_load(dh.read_text(basename(datei)))
+        typ = data.get("typ", "Unbekannt")
+        beschreibung = data.get("beschreibung", "")
+        zeit_raw = data.get("zeit", "")
+        zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
+        zeit_fmt = zeit_dt.strftime("%d.%m.%Y %H:%M")
+
+        doc.add_heading(f"{typ}", level=1)
+        doc.add_paragraph(f"Erstellt am: {zeit_fmt}")
+        doc.add_paragraph(beschreibung)
+
+        if "bild" in data:
+            try:
+                image_data = dh.read_binary(data["bild"])
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    tmp_img.write(image_data)
+                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+            except:
+                doc.add_paragraph("⚠️ Bild konnte nicht eingefügt werden.")
+
+        doc.add_paragraph("---")
 
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
     word_buffer.seek(0)
 
-    # PDF exportieren
+    # === PDF-Datei erstellen ===
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import cm
@@ -217,30 +224,45 @@ if eintrags_liste:
         c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
         x, y = 2 * cm, A4[1] - 2 * cm
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(x, y, f"Zellatlas-Eintrag: {typ}")
-        y -= 1.5 * cm
-        c.setFont("Helvetica", 12)
-        c.drawString(x, y, f"Erstellt am: {zeit_fmt}")
-        y -= 1.5 * cm
-        for line in beschreibung.splitlines():
-            c.drawString(x, y, line.strip())
-            y -= 0.6 * cm
-            if y < 2 * cm:
-                c.showPage()
-                y = A4[1] - 2 * cm
+        c.drawString(x, y, "Zellatlas Hämatologie")
+        y -= 2 * cm
+
+        for datei in eintrags_liste:
+            data = yaml.safe_load(dh.read_text(basename(datei)))
+            typ = data.get("typ", "Unbekannt")
+            beschreibung = data.get("beschreibung", "")
+            zeit_raw = data.get("zeit", "")
+            zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
+            zeit_fmt = zeit_dt.strftime("%d.%m.%Y %H:%M")
+
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(x, y, typ)
+            y -= 1 * cm
+            c.setFont("Helvetica", 12)
+            c.drawString(x, y, f"Erstellt am: {zeit_fmt}")
+            y -= 1 * cm
+            for line in beschreibung.splitlines():
+                c.drawString(x, y, line)
+                y -= 0.6 * cm
+                if y < 2 * cm:
+                    c.showPage()
+                    y = A4[1] - 2 * cm
+
+            y -= 1 * cm  # Abstand zwischen Einträgen
+
         c.save()
         with open(tmp_pdf.name, "rb") as f:
             pdf_data = f.read()
 
-    # Download-Buttons anzeigen
+    # === Download-Buttons anzeigen ===
     st.markdown("""
     <h2 style='text-decoration: underline; font-weight: bold; font-size: 28px; margin-top: 20px;'>
-        Zell-Einträge erfassen
+        Gesamten Zellatlas herunterladen
     </h2>
     """, unsafe_allow_html=True)
 
-    st.download_button("⬇️ Word", data=word_buffer, file_name=f"Zellatlas_{typ}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-    st.download_button("⬇️ PDF", data=pdf_data, file_name=f"Zellatlas_{typ}.pdf", mime="application/pdf")
+    st.download_button("⬇️ Gesamtes Word-Dokument", data=word_buffer, file_name="Zellatlas_Haematologie.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    st.download_button("⬇️ Gesamtes PDF-Dokument", data=pdf_data, file_name="Zellatlas_Haematologie.pdf", mime="application/pdf")
 
 # === Zurück zur Übersicht ===
 st.markdown("---")
