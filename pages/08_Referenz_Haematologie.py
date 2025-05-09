@@ -21,6 +21,7 @@ def load_icon_base64(path):
 img_safe = load_icon_base64("assets/security.png")
 img_guide = load_icon_base64("assets/guideline.png")
 img_pic = load_icon_base64("assets/picture.png")
+img_load = load_icon_base64("assets/download.png")
 
 # === Setup ===
 st.set_page_config(
@@ -140,9 +141,9 @@ if eintrags_liste:
             zeit_raw = data.get("zeit", "")
             try:
                 zeit_formatiert = datetime.fromisoformat(zeit_raw).strftime("%d.%m.%Y, %H:%M Uhr")
-                st.markdown(f"🕒 {zeit_formatiert}")
+                st.markdown(f"{zeit_formatiert}")
             except:
-                st.markdown(f"🕒 {zeit_raw}")
+                st.markdown(f"{zeit_raw}")
             st.markdown(data.get("beschreibung", "Keine Beschreibung vorhanden."))
             if "bild" in data:
                 st.image(dh.read_binary(basename(data["bild"])), width=300)
@@ -176,6 +177,69 @@ if eintrags_liste:
             st.warning(f"⚠️ Fehler beim Laden von {filename}: {e}")
 else:
     st.info("Noch keine Einträge vorhanden.")
+
+# === Neuesten Eintrag exportieren ===
+if eintrags_liste:
+    neueste_datei = sorted(eintrags_liste, reverse=True)[0]
+    data = yaml.safe_load(dh.read_text(basename(neueste_datei)))
+    typ = data.get("typ", "Unbekannt")
+    beschreibung = data.get("beschreibung", "")
+    zeit_raw = data.get("zeit", "")
+    zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
+    zeit_fmt = zeit_dt.strftime("%Y-%m-%d %H:%M")
+
+    # Word exportieren
+    doc = Document()
+    doc.add_heading(f"Zellatlas-Eintrag: {typ}", 0)
+    doc.add_paragraph(f"Erstellt am: {zeit_fmt}")
+    doc.add_paragraph(beschreibung)
+    if "bild" in data:
+        try:
+            image_data = dh.read_binary(data["bild"])
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                tmp_img.write(image_data)
+                doc.add_picture(tmp_img.name, width=Inches(4.5))
+        except:
+            st.warning("⚠️ Bild konnte nicht in Word eingefügt werden.")
+
+    word_buffer = io.BytesIO()
+    doc.save(word_buffer)
+    word_buffer.seek(0)
+
+    # PDF exportieren
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+        c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
+        x, y = 2 * cm, A4[1] - 2 * cm
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(x, y, f"Zellatlas-Eintrag: {typ}")
+        y -= 1.5 * cm
+        c.setFont("Helvetica", 12)
+        c.drawString(x, y, f"Erstellt am: {zeit_fmt}")
+        y -= 1.5 * cm
+        for line in beschreibung.splitlines():
+            c.drawString(x, y, line.strip())
+            y -= 0.6 * cm
+            if y < 2 * cm:
+                c.showPage()
+                y = A4[1] - 2 * cm
+        c.save()
+        with open(tmp_pdf.name, "rb") as f:
+            pdf_data = f.read()
+
+    # Download-Buttons anzeigen
+    img_load = load_icon_base64("assets/download.png")
+    st.markdown(f"""
+    <h3 style='display: flex; align-items: center; gap: 10px;'>
+        <img src='data:image/png;base64,{img_load}' width='32'>
+        Neuesten Zellatlas-Eintrag herunterladen
+    </h3>
+    """, unsafe_allow_html=True)
+    st.download_button("⬇️ Word", data=word_buffer, file_name=f"Zellatlas_{typ}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    st.download_button("⬇️ PDF", data=pdf_data, file_name=f"Zellatlas_{typ}.pdf", mime="application/pdf")
 
 # === Zurück zur Übersicht ===
 st.markdown("---")

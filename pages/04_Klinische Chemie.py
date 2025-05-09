@@ -37,6 +37,15 @@ def load_icon_base64(path):
 img_icon = load_icon_base64("assets/clinical_chemistry.png")
 img_paper = load_icon_base64("assets/paperclip.png")
 img_pic = load_icon_base64("assets/picture.png")
+img_post = load_icon_base64("assets/postanalyt.png")
+img_sample = load_icon_base64("assets/medical-sample.png")
+img_monitor = load_icon_base64("assets/monitor.png")
+img_befund = load_icon_base64("assets/befunde.png")
+img_anamnese = load_icon_base64("assets/anamnese.png")
+img_angabe = load_icon_base64("assets/angabe.png")
+img_patient = load_icon_base64("assets/patient.png")
+img_stamp = load_icon_base64("assets/stamp.png")
+img_kontrolle = load_icon_base64("assets/medicine.png")
 
 # ==== Titel ====
 st.markdown(f"""
@@ -46,7 +55,14 @@ st.markdown(f"""
 </h1>
 """, unsafe_allow_html=True)
 
-# ==== Formularfelder ====
+# ==== Patientenangaben ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_angabe}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Patientenangaben</h2>
+</div>
+""", unsafe_allow_html=True)
+
 col1, col2 = st.columns(2)
 with col1:
     patient_name = st.text_input("Patientenname")
@@ -54,24 +70,82 @@ with col1:
     geschlecht = st.selectbox("Geschlecht", ["", "weiblich", "männlich", "divers"])
     semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
 with col2:
-    groesse = st.text_input("Größe (cm)")
+    groesse = st.text_input("Grösse (cm)")
     gewicht = st.text_input("Gewicht (kg)")
     datum = st.date_input("Befunddatum", value=datetime.today())
 
+# ==== Anamnese ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_anamnese}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Anamnese</h2>
+</div>
+""", unsafe_allow_html=True)
+anamnese = st.text_area("Anamnese", height=100)
+
+# ==== Präanalytik ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_sample}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Präanalytik</h2>
+</div>
+""", unsafe_allow_html=True)
+probenmaterial = st.text_input("Probenmaterial")
+makro = st.text_area("Makroskopische Beurteilung", height=100)
+
+# ==== Analytik ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_monitor}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Analytik</h2>
+</div>
+""", unsafe_allow_html=True)
+reagenzien = st.text_area("Reagenzien (Name/LOT/Verfall)", height=100)
+qc = st.text_area("Qualitätskontrolle (Name/LOT/Verfall)", height=100)
+methode = st.text_input("Analyt/Methode/Gerät")
+validation = st.text_area("Technische Validation der QC (Sollwertbereich/Ist-gemessener QK-Wert)", height=100)
+
+# ==== Postanalytik ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_post}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Postanalytik</h2>
+</div>
+""", unsafe_allow_html=True)
+st.markdown("<h4 style='margin-top: 1rem; margin-bottom: 0.3rem; text-decoration: underline; color: #333;'>Biomedizinische Validation</h4>", unsafe_allow_html=True)
+transversal = st.text_area("Transversalbeurteilung", height=100)
+plausi = st.text_area("Plausibilitätskontrolle", height=100)
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 0.8rem;">
+    <img src="data:image/png;base64,{img_kontrolle}" style="height: 40px; margin-right: 10px;" />
+    <h3 style="margin: 0;">Plausibilitätskontrolle</h3>
+</div>
+""", unsafe_allow_html=True)
+extremwerte = st.text_area("Extremwerte", height=100)
+konstellation = st.text_area("Konstellationskontrolle der Werte miteinander", height=100)
+
+# ==== Freigabe ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_stamp}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Freigabeentscheidung</h2>
+</div>
+""", unsafe_allow_html=True)
+freigabe = st.text_area("Freigabeentscheidung", height=100)
+
 felder = {
     "vorbefunde": st.text_area("Vorbefunde", height=100),
-    "probenmaterial": st.text_input("Probenmaterial"),
-    "makro": st.text_area("Makroskopische Beurteilung", height=100),
-    "reagenzien": st.text_area("Reagenzien (Name/LOT/Verfall)", height=100),
-    "qc": st.text_area("Qualitätskontrolle (Name/LOT/Verfall)", height=100),
-    "methode": st.text_input("Methode/Gerät"),
-    "validation": st.text_area("Technische Validation der QC", height=100),
-    "bio_val": st.text_area("Biomedizinische Validation", height=100),
-    "transversal": st.text_area("Transversalbeurteilung", height=100),
-    "plausi": st.text_area("Plausibilitätskontrolle", height=100),
-    "extremwerte": st.text_area("Extremwerte", height=100),
-    "trend": st.text_area("Trend zu Vorbefunden", height=100),
-    "konstellation": st.text_area("Konstellationskontrolle", height=100),
+    "probenmaterial": probenmaterial,
+    "makro": makro,
+    "reagenzien": reagenzien,
+    "qc": qc,
+    "methode": methode,
+    "validation": validation,
+    "transversal": transversal,
+    "plausi": plausi,
+    "extremwerte": extremwerte,
+    "trend": st.text_area("Trend (zu Vorbefunden, falls vorhanden)", height=100),
+    "konstellation": konstellation,
 }
 
 # ==== Bilder uploaden ====
