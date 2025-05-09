@@ -19,12 +19,13 @@ icon_header = load_icon_base64("assets/labor.png")
 icon_screen = load_icon_base64("assets/screen.png")
 icon_hello = load_icon_base64("assets/groundhog.png")
 icon_chemical = load_icon_base64("assets/chemical.png")
+icon_journal = load_icon_base64("assets/journal.png")
 
 def load_icon_bytes(path):
     with open(path, "rb") as image_file:
         return image_file.read()
     
-icon_bytes = load_icon_bytes("assets/chemical.png")
+icon_bytes = load_icon_bytes("assets/journal.png")
 
 # Konvertiere zu PIL.Image (für Streamlit-kompatibles Format)
 icon_image = Image.open(io.BytesIO(icon_bytes))

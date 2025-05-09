@@ -14,9 +14,40 @@ import uuid
 from utils.data_manager import DataManager
 from utils.ui_helpers import apply_theme
 
+# ==== Icon laden ====
+def load_icon_base64(path):
+    with open(path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+    
+img_chemie = load_icon_base64("assets/chemie.png")
+img_paper = load_icon_base64("assets/paperclip.png")
+img_pic = load_icon_base64("assets/picture.png")
+img_datum = load_icon_base64("assets/calendar.png")
+img_semester = load_icon_base64("assets/semester.png")
+img_contract = load_icon_base64("assets/contract.png")
+img_experiment = load_icon_base64("assets/experiment.png")
+img_steps = load_icon_base64("assets/steps.png")
+img_frage = load_icon_base64("assets/question.png")
+img_ziel = load_icon_base64("assets/goal-flag.png")
+img_chemical = load_icon_base64("assets/chemical.png")
+img_tube = load_icon_base64("assets/test-tube.png")
+
+def load_icon_bytes(path):
+    with open(path, "rb") as image_file:
+        return image_file.read()
+    
+icon_bytes = load_icon_bytes("assets/test-tube.png")
+
+# Konvertiere zu PIL.Image (für Streamlit-kompatibles Format)
+icon_image = Image.open(io.BytesIO(icon_bytes))
+
+st.set_page_config(
+    page_title="Chemie",
+    page_icon=icon_image,
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 # ==== Initialisierung ====
-st.set_page_config(page_title="Chemie", page_icon="🧪")
-apply_theme()
 data_manager = DataManager()
 username = st.session_state.get("username", "anonymous")
 data_manager.load_user_data("chemie_eintraege", "data_chemie.csv", initial_value=[])
@@ -29,15 +60,6 @@ for dh in [dh_word, dh_img, dh_docs]:
     if not dh.filesystem.exists(dh.root_path):
         dh.filesystem.makedirs(dh.root_path)
 
-# ==== Icon laden ====
-def load_icon_base64(path):
-    with open(path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode("utf-8")
-
-img_chemie = load_icon_base64("assets/chemie.png")
-img_paper = load_icon_base64("assets/paperclip.png")
-img_pic = load_icon_base64("assets/picture.png")
-
 # ==== Titel ====
 st.markdown(f"""
 <h1 style='display: flex; align-items: center; gap: 24px;'>
@@ -49,20 +71,72 @@ st.markdown(f"""
 # ==== Formular ====
 col1, col2 = st.columns([2, 1])
 with col1:
-    titel = st.text_input("Titel des Praktikums")
+    with col1:
+        st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="data:image/png;base64,{img_experiment}" width="28">
+            <h4 style="margin: 0;">Titel des Praktikums</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        titel = st.text_input("")
 with col2:
-    datum = st.date_input("Datum", value=datetime.today())
-    semester = st.selectbox("Semester", ["1", "2", "3", "4", "5", "6"], key="semester")
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="data:image/png;base64,{img_datum}" width="28">
+        <h4 style="margin: 0;">Datum</h4>
+    </div>
+    """, unsafe_allow_html=True)
+    datum = st.date_input("")
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="data:image/png;base64,{img_semester}" width="28">
+        <h4 style="margin: 0;">Semester</h4>
+    </div>
+    """, unsafe_allow_html=True)
+    semester = st.selectbox("", ["1", "2", "3", "4", "5", "6"], key="semester")
 
-beschreibung = st.text_area("Beschreibung des Versuchs", height=120)
+st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 10px;">
+    <img src="data:image/png;base64,{img_contract}" width="28">
+    <h4 style="margin: 0;">Beschreibung des Versuchs</h4>
+</div>
+""", unsafe_allow_html=True)
+beschreibung = st.text_area("", height=120, key="beschreibung")
 col3, col4 = st.columns(2)
 with col3:
-    material = st.text_area("Benötigtes Material", height=100)
+    with col3:
+        st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="data:image/png;base64,{img_chemical}" width="28">
+            <h4 style="margin: 0;">Benötigtes Material</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        material = st.text_area("", height=100, key="material")
 with col4:
-    fragen = st.text_area("Vorbereitung + Fragen", height=100)
+    with col4:
+        # ==== Vorbereitung + Fragen ====
+        st.markdown(f"""
+        <h4 style='display: flex; align-items: center; gap: 10px; margin-top: 20px;'>
+            <img src='data:image/png;base64,{img_frage}' width='28'>
+            Vorbereitung + Fragen
+        </h4>
+        """, unsafe_allow_html=True)
+        fragen = st.text_area("", height=100, key="fragen")
+st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 10px;">
+    <img src="data:image/png;base64,{img_steps}" width="28">
+    <h4 style="margin: 0;">Arbeitsschritte</h4>
+</div>
+""", unsafe_allow_html=True)
+arbeitsschritte = st.text_area("", height=120, key="arbeitsschritte")
 
-arbeitsschritte = st.text_area("Arbeitsschritte", height=120)
-ziel = st.text_area("Ziel des Versuchs", height=100)
+st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 10px;">
+    <img src="data:image/png;base64,{img_ziel}" width="28">
+    <h4 style="margin: 0;">Ziel des Versuchs</h4>
+</div>
+""", unsafe_allow_html=True)
+ziel = st.text_area("", height=100, key="ziel")
 
 # ==== Bilder hochladen ====
 st.markdown(f"""

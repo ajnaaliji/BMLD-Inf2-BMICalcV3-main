@@ -30,7 +30,7 @@ def entferne_verwaiste_eintraege(df, data_key, word_handler, anhang_handler, dat
     if len(neue_eintraege) != len(df):
         st.session_state[data_key] = pd.DataFrame(neue_eintraege)
         data_manager.save_data(data_key)
-        st.success("🧹 Verwaiste Einträge wurden entfernt.")
+        st.success("Verwaiste Einträge wurden entfernt.")
         return pd.DataFrame(neue_eintraege)
     
     return df
@@ -151,7 +151,10 @@ elif fach_key == "haematologie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
 
-    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
+    if "semester" in eintrags_df.columns:
+        eintrags_df["semester"] = eintrags_df["semester"].astype(str).fillna("")
+    else:
+        eintrags_df["semester"] = ""
 
 # ==== Prüfung auf gültige Daten ====
 if eintrags_df.empty or "titel" not in eintrags_df.columns or "datum" not in eintrags_df.columns:
