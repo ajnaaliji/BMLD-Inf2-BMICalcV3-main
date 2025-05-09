@@ -7,6 +7,8 @@ import ast
 from utils.data_manager import DataManager
 from utils.ui_helpers import apply_theme
 from utils.ui_helpers import apply_theme
+from PIL import Image
+import io
 
 def entferne_verwaiste_eintraege(df, data_key, word_handler, anhang_handler, data_manager):
     neue_eintraege = []
@@ -64,11 +66,23 @@ icons = {
     "klinische chemie": load_icon_base64("assets/rna.png"),
     "semester": load_icon_base64("assets/semester.png"),
     "datum": load_icon_base64("assets/calendar.png"),
-    "suchen": load_icon_base64("assets/search.png")
+    "suchen": load_icon_base64("assets/search.png"),
+    "ordner": load_icon_base64("assets/ordner.png")
 }
 
+
 # ===== Session-Daten =====
-st.set_page_config(page_title="Fachansicht", page_icon="📂")
+from PIL import Image
+import io
+
+def load_icon_bytes(path):
+    with open(path, "rb") as image_file:
+        return image_file.read()
+
+icon_bytes = load_icon_bytes("assets/ordner.png")
+icon_image = Image.open(io.BytesIO(icon_bytes))
+
+st.set_page_config(page_title="Fachansicht", page_icon=icon_image)
 apply_theme()
 fach_key = st.session_state.get("fach", "").lower().strip()
 username = st.session_state.get("username")
