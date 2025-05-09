@@ -134,23 +134,31 @@ if fach_key == "chemie":
     else:
         eintrags_df["semester"] = eintrags_df["semester"].fillna("")
 elif fach_key == "klinische chemie":
-    data_manager.load_user_data("klinische_eintraege", f"data_klinische_chemie_{username}.csv", initial_value=[])
-    eintrags_df = pd.DataFrame(st.session_state["klinische_eintraege"])
-    if "semester" not in eintrags_df.columns:
-        eintrags_df["semester"] = ""
-    else:
-        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
+    data_key = "klinische_eintraege"
+    data_manager.load_user_data(data_key, f"data_klinische_chemie_{username}.csv", initial_value=[])
+    if data_key not in st.session_state or not isinstance(st.session_state[data_key], pd.DataFrame):
+        st.session_state[data_key] = pd.DataFrame()
     dh_anhang = data_manager._get_data_handler(f"anhang_klinische_chemie/{username}")
-elif fach_key == "haematologie":
-    data_manager.load_user_data("haematologie_eintraege", "data_haematologie.csv", initial_value=[])
-    eintrags_df = pd.DataFrame(st.session_state["haematologie_eintraege"])
+    eintrags_df = pd.DataFrame(st.session_state[data_key])
+    eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
+
     if "semester" not in eintrags_df.columns:
         eintrags_df["semester"] = ""
     else:
         eintrags_df["semester"] = eintrags_df["semester"].fillna("")
+elif fach_key == "haematologie":
+    data_key = "haematologie_eintraege"
+    data_manager.load_user_data(data_key, "data_haematologie.csv", initial_value=[])
+    if data_key not in st.session_state or not isinstance(st.session_state[data_key], pd.DataFrame):
+        st.session_state[data_key] = pd.DataFrame()
     dh_anhang = data_manager._get_data_handler(f"anhang_haematologie/{username}")
-else:
-    eintrags_df = pd.DataFrame()
+    eintrags_df = pd.DataFrame(st.session_state[data_key])
+    eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
+
+    if "semester" not in eintrags_df.columns:
+        eintrags_df["semester"] = ""
+    else:
+        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
 
 # ==== Prüfung auf gültige Daten ====
 if eintrags_df.empty or "titel" not in eintrags_df.columns or "datum" not in eintrags_df.columns:
