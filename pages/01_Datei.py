@@ -123,6 +123,8 @@ dh = data_manager._get_data_handler(f"{ordner_pfade.get(fach_key)}/{username}")
 if fach_key == "chemie":
     data_key = "chemie_eintraege"
     data_manager.load_user_data(data_key, "data_chemie.csv", initial_value=[])
+    if not st.session_state[data_key]:
+        st.session_state[data_key] = []
     dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
