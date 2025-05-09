@@ -191,7 +191,7 @@ if st.button("📁 Speichern und Exportieren"):
         "gewicht": gewicht,
         "datum": datum.strftime("%Y-%m-%d"),
         "anhaenge": anhang_dateien,
-        "semester": semester,
+        "semester": str(semester),
         "dateiname": filename_word,
         **felder
     }

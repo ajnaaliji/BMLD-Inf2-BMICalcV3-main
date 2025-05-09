@@ -284,7 +284,7 @@ if st.button("📂 Speichern und Exportieren"):
         "dateiname": filename_word,
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    neuer_eintrag["semester"] = semester
+    neuer_eintrag["semester"] = str(semester)
 
     df_neu = pd.DataFrame([neuer_eintrag])
     if isinstance(st.session_state["haematologie_eintraege"], pd.DataFrame):

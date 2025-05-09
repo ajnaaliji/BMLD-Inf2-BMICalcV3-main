@@ -140,10 +140,8 @@ elif fach_key == "klinische chemie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
 
-    if "semester" not in eintrags_df.columns:
-        eintrags_df["semester"] = ""
-    else:
-        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
+    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
+
 elif fach_key == "haematologie":
     data_key = "haematologie_eintraege"
     data_manager.load_user_data(data_key, "data_haematologie.csv", initial_value=[])
@@ -153,10 +151,7 @@ elif fach_key == "haematologie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
 
-    if "semester" not in eintrags_df.columns:
-        eintrags_df["semester"] = ""
-    else:
-        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
+    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
 
 # ==== Prüfung auf gültige Daten ====
 if eintrags_df.empty or "titel" not in eintrags_df.columns or "datum" not in eintrags_df.columns:
