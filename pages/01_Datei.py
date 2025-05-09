@@ -6,6 +6,34 @@ import time
 import ast
 from utils.data_manager import DataManager
 from utils.ui_helpers import apply_theme
+from utils.ui_helpers import apply_theme
+
+def entferne_verwaiste_eintraege(df, data_key, word_handler, anhang_handler, data_manager):
+    neue_eintraege = []
+
+    for _, row in df.iterrows():
+        word_datei = row.get("dateiname", "")
+        anhaenge = row.get("anhaenge", [])
+
+        if isinstance(anhaenge, str):
+            try:
+                anhaenge = ast.literal_eval(anhaenge)
+            except:
+                anhaenge = []
+
+        word_exists = word_handler.exists(word_datei) if word_datei else True
+        all_attachments_exist = all(anhang_handler.exists(a) for a in anhaenge)
+
+        if word_exists and all_attachments_exist:
+            neue_eintraege.append(row)
+
+    if len(neue_eintraege) != len(df):
+        st.session_state[data_key] = pd.DataFrame(neue_eintraege)
+        data_manager.save_data(data_key)
+        st.success("🧹 Verwaiste Einträge wurden entfernt.")
+        return pd.DataFrame(neue_eintraege)
+    
+    return df
 
 # ===== Login-Schutz =====
 if "authentication_status" not in st.session_state or not st.session_state["authentication_status"]:
@@ -93,13 +121,16 @@ dh = data_manager._get_data_handler(f"{ordner_pfade.get(fach_key)}/{username}")
 
 # === Einträge & Anhänge laden ===
 if fach_key == "chemie":
-    data_manager.load_user_data("chemie_eintraege", "data_chemie.csv", initial_value=[])
-    eintrags_df = pd.DataFrame(st.session_state["chemie_eintraege"])
+    data_key = "chemie_eintraege"
+    data_manager.load_user_data(data_key, "data_chemie.csv", initial_value=[])
+    dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
+    eintrags_df = pd.DataFrame(st.session_state[data_key])
+    eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
+    
     if "semester" not in eintrags_df.columns:
         eintrags_df["semester"] = ""
     else:
         eintrags_df["semester"] = eintrags_df["semester"].fillna("")
-    dh_anhang = data_manager._get_data_handler(f"anhang_chemie/{username}")
 elif fach_key == "klinische chemie":
     data_manager.load_user_data("klinische_eintraege", f"data_klinische_chemie_{username}.csv", initial_value=[])
     eintrags_df = pd.DataFrame(st.session_state["klinische_eintraege"])
