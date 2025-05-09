@@ -215,44 +215,58 @@ if eintrags_liste:
     doc.save(word_buffer)
     word_buffer.seek(0)
 
-    # === PDF-Datei erstellen ===
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.units import cm
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
-        c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
-        x, y = 2 * cm, A4[1] - 2 * cm
-        c.setFont("Helvetica-Bold", 16)
-        c.drawString(x, y, "Zellatlas Hämatologie")
-        y -= 2 * cm
+with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
+    c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
+    x, y = 2 * cm, A4[1] - 2 * cm
 
-        for datei in eintrags_liste:
-            data = yaml.safe_load(dh.read_text(basename(datei)))
-            typ = data.get("typ", "Unbekannt")
-            beschreibung = data.get("beschreibung", "")
-            zeit_raw = data.get("zeit", "")
-            zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
-            zeit_fmt = zeit_dt.strftime("%d.%m.%Y %H:%M")
+    for datei in eintrags_liste[::-1]:  # ältester unten, neuester oben
+        data = yaml.safe_load(dh.read_text(basename(datei)))
+        typ = data.get("typ", "Unbekannt")
+        beschreibung = data.get("beschreibung", "")
+        zeit_raw = data.get("zeit", "")
+        zeit_dt = datetime.fromisoformat(zeit_raw) if zeit_raw else datetime.now()
+        zeit_fmt = zeit_dt.strftime("%d.%m.%Y %H:%M")
 
-            c.setFont("Helvetica-Bold", 14)
-            c.drawString(x, y, typ)
-            y -= 1 * cm
-            c.setFont("Helvetica", 12)
-            c.drawString(x, y, f"Erstellt am: {zeit_fmt}")
-            y -= 1 * cm
-            for line in beschreibung.splitlines():
-                c.drawString(x, y, line)
-                y -= 0.6 * cm
-                if y < 2 * cm:
-                    c.showPage()
-                    y = A4[1] - 2 * cm
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(x, y, f"Zelltyp: {typ}")
+        y -= 1 * cm
+        c.setFont("Helvetica", 12)
+        c.drawString(x, y, f"Erstellt am: {zeit_fmt}")
+        y -= 1 * cm
 
-            y -= 1 * cm  # Abstand zwischen Einträgen
+        for line in beschreibung.splitlines():
+            c.drawString(x, y, line.strip())
+            y -= 0.6 * cm
+            if y < 4 * cm:
+                c.showPage()
+                y = A4[1] - 2 * cm
 
-        c.save()
-        with open(tmp_pdf.name, "rb") as f:
-            pdf_data = f.read()
+        # === Bild einfügen ===
+        if "bild" in data:
+            try:
+                image_data = dh.read_binary(data["bild"])
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    tmp_img.write(image_data)
+                    tmp_img.flush()
+                    c.drawImage(tmp_img.name, x, y - 6 * cm, width=10 * cm, height=6 * cm, preserveAspectRatio=True)
+                    y -= 7 * cm
+                    if y < 4 * cm:
+                        c.showPage()
+                        y = A4[1] - 2 * cm
+            except Exception as e:
+                c.drawString(x, y, f"⚠️ Bild konnte nicht eingefügt werden: {e}")
+                y -= 1 * cm
+
+        y -= 1 * cm  # Abstand zum nächsten Eintrag
+
+    c.save()
+    with open(tmp_pdf.name, "rb") as f:
+        pdf_data = f.read()
+
 
     # === Download-Buttons anzeigen ===
     st.markdown("""
