@@ -12,6 +12,19 @@ if "authentication_status" not in st.session_state or not st.session_state["auth
     st.switch_page("/")
     st.stop()
 
+# ===== Fachname lesen =====
+fach_key = st.session_state.get("fach", "").lower().strip()
+
+# ===== Session Cleanup für alte Einträge =====
+eintrag_keys = {
+    "chemie": "chemie_eintraege",
+    "haematologie": "haematologie_eintraege",
+    "klinische chemie": "klinische_eintraege"
+}
+eintrags_key = eintrag_keys.get(fach_key)
+if eintrags_key and eintrags_key in st.session_state:
+    del st.session_state[eintrags_key]
+
 # ===== Icons laden =====
 def load_icon_base64(path):
     with open(path, "rb") as image_file:
