@@ -79,7 +79,7 @@ def load_icon_bytes(path):
     with open(path, "rb") as image_file:
         return image_file.read()
 
-icon_bytes = load_icon_bytes("assets/ordner.png")
+icon_bytes = load_icon_bytes("assets/datei.png")
 icon_image = Image.open(io.BytesIO(icon_bytes))
 
 st.set_page_config(page_title="Fachansicht", page_icon=icon_image)
