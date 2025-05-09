@@ -190,7 +190,7 @@ if st.button("📎 Speichern und Exportieren"):
         "arbeitsschritte": arbeitsschritte,
         "ziel": ziel,
         "anhaenge": anhang_dateien,
-        "semester": semester,
+        "semester": str(semester),
         "dateiname": filename_word,
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }

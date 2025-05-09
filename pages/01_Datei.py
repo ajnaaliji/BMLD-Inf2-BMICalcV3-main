@@ -129,10 +129,8 @@ if fach_key == "chemie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
     
-    if "semester" not in eintrags_df.columns:
-        eintrags_df["semester"] = ""
-    else:
-        eintrags_df["semester"] = eintrags_df["semester"].fillna("")
+    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
+
 elif fach_key == "klinische chemie":
     data_key = "klinische_eintraege"
     data_manager.load_user_data(data_key, f"data_klinische_chemie_{username}.csv", initial_value=[])
