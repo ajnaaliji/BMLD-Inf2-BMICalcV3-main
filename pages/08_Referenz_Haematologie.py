@@ -63,12 +63,14 @@ if "zell_eintraege" not in st.session_state:
     st.session_state.zell_eintraege = [{}]
 
 # === Eingabeformulare ===
-st.title("Zellatlas Hämatologie")
 st.markdown(f"""
-<h3 style='display: flex; align-items: center; gap: 10px;'>
-    <img src='data:image/png;base64,{img_guide}' width='34'>
+<h1 style='display: flex; align-items: center; gap: 16px; margin-bottom: 0;'>
+    <img src='data:image/png;base64,{img_guide}' width='48'>
+    Zellatlas Hämatologie
+</h1>
+<p style='margin-top: 4px; font-size: 20px; text-decoration: underline; color: #333;'>
     Zell-Einträge erfassen
-</h3>
+</p>
 """, unsafe_allow_html=True)
 
 for idx, eintrag in enumerate(st.session_state.zell_eintraege):
@@ -231,13 +233,12 @@ if eintrags_liste:
             pdf_data = f.read()
 
     # Download-Buttons anzeigen
-    img_load = load_icon_base64("assets/download.png")
-    st.markdown(f"""
-    <h3 style='display: flex; align-items: center; gap: 10px;'>
-        <img src='data:image/png;base64,{img_load}' width='32'>
-        Neuesten Zellatlas-Eintrag herunterladen
-    </h3>
+    st.markdown("""
+    <h2 style='text-decoration: underline; font-weight: bold; font-size: 28px; margin-top: 20px;'>
+        Zell-Einträge erfassen
+    </h2>
     """, unsafe_allow_html=True)
+
     st.download_button("⬇️ Word", data=word_buffer, file_name=f"Zellatlas_{typ}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     st.download_button("⬇️ PDF", data=pdf_data, file_name=f"Zellatlas_{typ}.pdf", mime="application/pdf")
 
