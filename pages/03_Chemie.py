@@ -87,13 +87,15 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
     datum = st.date_input("")
-    st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <img src="data:image/png;base64,{img_semester}" width="28">
-        <h4 style="margin: 0;">Semester</h4>
-    </div>
-    """, unsafe_allow_html=True)
-    semester = st.selectbox("", ["1", "2", "3", "4", "5", "6"], key="semester")
+
+# Neue Zeile für Semester-Feld
+st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+    <img src="data:image/png;base64,{img_semester}" width="28">
+    <h4 style="margin: 0;">Semester</h4>
+</div>
+""", unsafe_allow_html=True)
+semester = st.selectbox("", ["1", "2", "3", "4", "5", "6"], key="semester")
 
 st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 10px;">
@@ -103,25 +105,25 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 beschreibung = st.text_area("", height=120, key="beschreibung")
 col3, col4 = st.columns(2)
+
 with col3:
-    with col3:
-        st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="data:image/png;base64,{img_chemical}" width="28">
-            <h4 style="margin: 0;">Benötigtes Material</h4>
-        </div>
-        """, unsafe_allow_html=True)
-        material = st.text_area("", height=100, key="material")
+    st.markdown(f"""
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="data:image/png;base64,{img_chemical}" width="28">
+        <h4 style="margin: 0;">Benötigtes Material</h4>
+    </div>
+    """, unsafe_allow_html=True)
+    material = st.text_area("", height=100, key="material")
+
 with col4:
-    with col4:
-        # ==== Vorbereitung + Fragen ====
-        st.markdown(f"""
-        <h4 style='display: flex; align-items: center; gap: 10px; margin-top: 20px;'>
-            <img src='data:image/png;base64,{img_frage}' width='28'>
-            Vorbereitung + Fragen
-        </h4>
-        """, unsafe_allow_html=True)
-        fragen = st.text_area("", height=100, key="fragen")
+    st.markdown(f"""
+    <h4 style='display: flex; align-items: center; gap: 10px; margin-top: 0px;'>
+        <img src='data:image/png;base64,{img_frage}' width='28'>
+        Vorbereitung + Fragen
+    </h4>
+    """, unsafe_allow_html=True)
+    fragen = st.text_area("", height=100, key="fragen")
+
 st.markdown(f"""
 <div style="display: flex; align-items: center; gap: 10px;">
     <img src="data:image/png;base64,{img_steps}" width="28">
