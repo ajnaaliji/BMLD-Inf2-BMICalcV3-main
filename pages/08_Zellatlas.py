@@ -84,6 +84,12 @@ for idx, eintrag in enumerate(st.session_state.zell_eintraege):
     """, unsafe_allow_html=True)
 
 bild = st.file_uploader("", type=["png", "jpg", "jpeg"], key=f"bild_{idx}")
+if bild is not None:
+    try:
+        Image.open(bild).verify()
+    except Exception as e:
+        st.warning(f"⚠️ Hochgeladenes Bild ist ungültig: {e}")
+        bild = None  # wird dann nicht gespeichert
 beschreibung = st.text_area("Beschreibung / Merkmale", key=f"beschreibung_{idx}")
 st.session_state.zell_eintraege[idx] = {"typ": typ, "beschreibung": beschreibung, "bild": bild}
 
@@ -206,8 +212,8 @@ if eintrags_liste:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
                     tmp_img.write(image_data)
                     doc.add_picture(tmp_img.name, width=Inches(4.5))
-            except:
-                doc.add_paragraph("⚠️ Bild konnte nicht eingefügt werden.")
+            except Exception as e:
+                doc.add_paragraph(f"⚠️ Bild {data.get('bild', 'unbekannt')} konnte nicht eingefügt werden: {e}")
 
         doc.add_paragraph("---")
 
@@ -258,7 +264,7 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
                         c.showPage()
                         y = A4[1] - 2 * cm
             except Exception as e:
-                c.drawString(x, y, f"⚠️ Bild konnte nicht eingefügt werden: {e}")
+                c.drawString(x, y, f"⚠️ Bild {data.get('bild', 'unbekannt')} fehlerhaft: {str(e)}")
                 y -= 1 * cm
 
         y -= 1 * cm  # Abstand zum nächsten Eintrag
