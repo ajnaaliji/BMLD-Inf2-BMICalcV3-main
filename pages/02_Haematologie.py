@@ -195,15 +195,25 @@ st.markdown(f"""
 uploaded_images = st.file_uploader("Bilder auswählen", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 temp_uploaded_images = []
 if uploaded_images:
-    st.markdown("**Vorschau:**")
-    bestehende = [f["name"] for f in dh_img.filesystem.ls(dh_img.root_path)]
-    for img in uploaded_images:
-        st.image(img, use_container_width=True)
-        name_clean = img.name.replace(" ", "_").replace("\u00e4", "ae").replace("\u00f6", "oe").replace("\u00fc", "ue")
-        if any(f.endswith(name_clean) for f in bestehende):
-            st.info(f"⏭️ Bild bereits vorhanden: {name_clean}")
-            continue
-        temp_uploaded_images.append((name_clean, img.getvalue()))
+        st.markdown("**Vorschau:**")
+        valide_uploaded_images = []  
+        bestehende = [f["name"] for f in dh_img.filesystem.ls(dh_img.root_path)]
+        for img in uploaded_images:
+            st.image(img, use_container_width=True)
+            name_clean = img.name.replace(" ", "_").replace("\u00e4", "ae").replace("\u00f6", "oe").replace("\u00fc", "ue")
+            if any(f.endswith(name_clean) for f in bestehende):
+                st.info(f"⏭️ Bild bereits vorhanden: {name_clean}")
+                continue
+
+            try:
+                img_bytes = img.getvalue()
+                image_pil = Image.open(io.BytesIO(img_bytes))
+                st.text(f"{name_clean} – Größe: {image_pil.size}")
+                if image_pil.size[0] == 0 or image_pil.size[1] == 0:
+                    raise ValueError("Bildgröße ist 0")
+                valide_uploaded_images.append((name_clean, img_bytes))
+            except (UnidentifiedImageError, ValueError, ZeroDivisionError) as e:
+                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name_clean} ({e})")
 
 # ==== Datei-Upload ====
 st.markdown(f"""
@@ -217,7 +227,11 @@ temp_uploads = [(f.name, f.getvalue()) for f in uploaded_docs] if uploaded_docs 
 anhang_dateien = []
 
 # ==== Speichern & Exportieren ====
-if st.button("📂 Speichern und Exportieren"):
+if "haema_exported" not in st.session_state:
+    st.session_state["haema_exported"] = False
+
+if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_exported"]:
+    st.session_state["haema_exported"] = True
     if not titel.strip():
         st.warning("Bitte einen Titel eingeben.")
         st.stop()
@@ -225,7 +239,7 @@ if st.button("📂 Speichern und Exportieren"):
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
     # ==== Bilder speichern ====
-    for name, img_bytes in temp_uploaded_images:
+    for name, img_bytes in valide_uploaded_images:
         dh_img.save(f"{timestamp}_{uuid.uuid4().hex}_{name}", img_bytes)
 
     # ==== Anhänge speichern ====
@@ -240,17 +254,55 @@ if st.button("📂 Speichern und Exportieren"):
     doc.add_heading(f"Befund: {titel}", 0)
     doc.add_paragraph(f"Datum: {datum.strftime('%d.%m.%Y')}")
 
+    # Zellzählung erfassen
+    doc.add_heading("Zellzählung", level=2)
+    table = doc.add_table(rows=1, cols=4)
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = "Zelltyp"
+    hdr_cells[1].text = "Zählung 1"
+    hdr_cells[2].text = "Zählung 2"
+    hdr_cells[3].text = "Durchschnitt"
+
+    for zelltyp in zelltypen:
+        z1 = st.session_state.get(f"{zelltyp}_z1", 0)
+        z2 = st.session_state.get(f"{zelltyp}_z2", 0)
+        avg = (z1 + z2) / 2
+        row_cells = table.add_row().cells
+        row_cells[0].text = zelltyp
+        row_cells[1].text = str(z1)
+        row_cells[2].text = str(z2)
+        row_cells[3].text = f"{avg:.1f}"
+
+    # Zusatzbereiche
+    def add_section_to_doc(title, felder, prefix, sonstiges_key):
+        doc.add_heading(title, level=2)
+        for feld in felder:
+            wert = st.session_state.get(f"{prefix}_{feld}", "-")
+            doc.add_paragraph(f"{feld}: {wert}")
+        doc.add_paragraph("Sonstiges:")
+        doc.add_paragraph(st.session_state.get(sonstiges_key, "-"))
+
+    add_section_to_doc("Rotes Blutbild", rb_felder, "rb", "rb_sonstiges")
+    add_section_to_doc("Neutrophile Granulozyten", gb_felder, "gb", "ng_sonstiges")
+    add_section_to_doc("Lymphozytenveränderungen", ly_felder, "ly", "lc_sonstiges")
+    add_section_to_doc("Thrombozyten", th_felder, "th", "th_sonstiges")
+
     if temp_uploaded_images:
         doc.add_page_break()
         doc.add_heading("Bilder", level=2)
+
         for name, img_bytes in temp_uploaded_images:
             try:
-                image_pil = Image.open(io.BytesIO(img_bytes))
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-                    image_pil.save(tmp_img.name)
-                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img_file:
+                    tmp_img_file.write(img_bytes)
+                    tmp_img_file_path = tmp_img_file.name
+                doc.add_picture(tmp_img_file_path, width=Inches(4.5))
+                doc.add_paragraph(name)
             except Exception as e:
                 st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
+    from PIL import UnidentifiedImageError
+
+    valide_uploaded_images = []
 
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
@@ -262,20 +314,102 @@ if st.button("📂 Speichern und Exportieren"):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
         c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
         x, y = 2 * cm, A4[1] - 2 * cm
+
+    # Titel & Datum
         c.setFont("Helvetica-Bold", 16)
         c.drawString(x, y, f"Befund: {titel}")
-        y -= 1.5 * cm
+        y -= 1.2 * cm
         c.setFont("Helvetica", 12)
         c.drawString(x, y, f"Datum: {datum.strftime('%d.%m.%Y')}")
         y -= 1.5 * cm
 
-        c.save()
-        pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
-        with open(tmp_pdf.name, "rb") as f:
-            pdf_bytes = f.read()
-            dh_docs.save(pdf_filename, pdf_bytes)
-            anhang_dateien.append(pdf_filename)
+    # Zellzählung als Tabelle
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(x, y, "Zellzählung")
+        y -= 1 * cm
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(x, y, "Zelltyp")
+        c.drawString(x + 6 * cm, y, "Zählung 1")
+        c.drawString(x + 9 * cm, y, "Zählung 2")
+        c.drawString(x + 12 * cm, y, "Ø")
+        y -= 0.7 * cm
+        c.setFont("Helvetica", 12)
 
+        for zelltyp in zelltypen:
+            z1 = st.session_state.get(f"{zelltyp}_z1", 0)
+            z2 = st.session_state.get(f"{zelltyp}_z2", 0)
+            avg = (z1 + z2) / 2
+            c.drawString(x, y, zelltyp)
+            c.drawString(x + 6 * cm, y, str(z1))
+            c.drawString(x + 9 * cm, y, str(z2))
+            c.drawString(x + 12 * cm, y, f"{avg:.1f}")
+            y -= 0.5 * cm
+            if y < 3 * cm:
+                c.showPage()
+                y = A4[1] - 2 * cm
+
+        # Zusatzbereiche wie im Word-Dokument
+        def draw_section(c, x, y, title, felder, prefix, sonst_key):
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(x, y, title)
+            y -= 0.8 * cm
+            c.setFont("Helvetica", 12)
+            for feld in felder:
+                wert = st.session_state.get(f"{prefix}_{feld}", "-")
+                c.drawString(x, y, f"{feld}: {wert}")
+                y -= 0.5 * cm
+                if y < 3 * cm:
+                    c.showPage()
+                    y = A4[1] - 2 * cm
+            c.drawString(x, y, "Sonstiges:")
+            y -= 0.5 * cm
+            sonst_text = st.session_state.get(sonst_key, "-")
+            for line in sonst_text.splitlines():
+                c.drawString(x, y, line)
+                y -= 0.5 * cm
+                if y < 3 * cm:
+                    c.showPage()
+                    y = A4[1] - 2 * cm
+            y -= 1 * cm
+            return y
+
+        y = draw_section(c, x, y, "Rotes Blutbild", rb_felder, "rb", "rb_sonstiges")
+        y = draw_section(c, x, y, "Neutrophile Granulozyten", gb_felder, "gb", "ng_sonstiges")
+        y = draw_section(c, x, y, "Lymphozytenveränderungen", ly_felder, "ly", "lc_sonstiges")
+        y = draw_section(c, x, y, "Thrombozyten", th_felder, "th", "th_sonstiges")
+
+    # Bilder einfügen
+        if temp_uploaded_images:
+            c.showPage()
+            y = A4[1] - 2 * cm
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(x, y, "Bilder")
+            y -= 1.2 * cm
+
+            for name, img_bytes in temp_uploaded_images:
+                try:
+                    tmp_path = f"{tempfile.gettempdir()}/{uuid.uuid4().hex}.png"
+                    with open(tmp_path, "wb") as f_img:
+                        f_img.write(img_bytes)
+                    c.drawImage(tmp_path, x, y - 7 * cm, width=12 * cm, height=6 * cm)
+                    y -= 8 * cm
+                    if y < 3 * cm:
+                        c.showPage()
+                        y = A4[1] - 2 * cm
+                except Exception as e:
+                    st.warning(f"⚠️ Bild konnte nicht ins PDF eingefügt werden: {name} ({e})")
+
+        c.save()
+
+    # PDF-Datei speichern
+    pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
+    with open(tmp_pdf.name, "rb") as f:
+        pdf_bytes = f.read()
+    dh_docs.save(pdf_filename, pdf_bytes)
+    anhang_dateien.append(pdf_filename)
+
+    from PIL import UnidentifiedImageError
+    
     # ==== Eintrag speichern ====
     neuer_eintrag = {
         "titel": titel,
@@ -302,5 +436,8 @@ if st.button("📂 Speichern und Exportieren"):
     st.download_button("⬇️ PDF herunterladen", data=pdf_bytes, file_name=pdf_filename, mime="application/pdf")
 
 # ==== Zurück ==== 
+st.session_state["haema_exported"] = False
+
 if st.button("🔙 Zurück zur Übersicht"):
+    st.session_state["haema_exported"] = False
     st.switch_page("pages/01_Datei.py")
