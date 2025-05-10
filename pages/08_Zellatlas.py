@@ -139,7 +139,7 @@ if eintrags_liste:
     for filename in eintrags_liste:
         try:
             data = yaml.safe_load(dh.read_text(basename(filename)))
-            st.markdown(f"### 🔬 {data['typ']}")
+            st.markdown(f"### {data['typ']}")
             zeit_raw = data.get("zeit", "")
             try:
                 zeit_formatiert = datetime.fromisoformat(zeit_raw).strftime("%d.%m.%Y, %H:%M Uhr")
