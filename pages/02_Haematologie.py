@@ -13,6 +13,8 @@ from docx.shared import Inches
 import uuid
 from utils.data_manager import DataManager
 from utils.ui_helpers import apply_theme
+from PIL import Image, UnidentifiedImageError
+import os
 
 # ==== Initialisierung ====
 st.set_page_config(page_title="Hämatologie", page_icon="🩸")
@@ -383,7 +385,8 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
         y = draw_section(c, x, y, "Lymphozytenveränderungen", ly_felder, "ly", "lc_sonstiges")
         y = draw_section(c, x, y, "Thrombozyten", th_felder, "th", "th_sonstiges")
 
-    # Bilder einfügen
+    # Bilder einfügen (robustere Version mit PIL)
+
     if valide_uploaded_images:
         c.showPage()
         y = A4[1] - 2 * cm
@@ -393,14 +396,25 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
 
         for name, img_bytes in valide_uploaded_images:
             try:
+                # Bild öffnen mit PIL
+                image = Image.open(io.BytesIO(img_bytes))
+                image = image.convert("RGB")  # Für JPEG/PDF sicherstellen
+
+                # Temporär als PNG speichern
                 tmp_path = f"{tempfile.gettempdir()}/{uuid.uuid4().hex}.png"
-                with open(tmp_path, "wb") as f_img:
-                    f_img.write(img_bytes)
+                image.save(tmp_path, format="PNG")
+
+                # Sicherheit: Breite/Höhe prüfen
+                if image.width == 0 or image.height == 0:
+                    raise ValueError("Bildgröße ist 0")
+
+                # Bild ins PDF zeichnen
                 c.drawImage(tmp_path, x, y - 7 * cm, width=12 * cm, height=6 * cm)
                 y -= 8 * cm
                 if y < 3 * cm:
                     c.showPage()
                     y = A4[1] - 2 * cm
+
             except Exception as e:
                 st.warning(f"⚠️ Bild konnte nicht ins PDF eingefügt werden: {name} ({e})")
   
