@@ -64,9 +64,9 @@ if "zell_eintraege" not in st.session_state:
 
 # === Eingabeformulare ===
 st.markdown(f"""
-<h1 style='display: flex; align-items: center; gap: 16px; margin-bottom: 0;'>
+<h1 style='display: flex; align-items: center; gap: 16px; margin-bottom: 0; justify-content: space-between;'>
+    <span>Zellatlas Hämatologie</span>
     <img src='data:image/png;base64,{img_guide}' width='48'>
-    Zellatlas Hämatologie
 </h1>
 <p style='margin-top: 4px; font-size: 20px; text-decoration: underline; color: #333;'>
     Zell-Einträge erfassen
