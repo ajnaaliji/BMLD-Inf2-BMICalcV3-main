@@ -409,7 +409,7 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
         c.save()
 
     # PDF-Datei speichern
-    pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{titel.replace(' ', '_')}.pdf"
+    pdf_filename = f"{timestamp}_{safe_titel}.pdf"
     with open(tmp_pdf.name, "rb") as f:
         pdf_bytes = f.read()
     dh_docs.save(pdf_filename, pdf_bytes)
