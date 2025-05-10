@@ -302,8 +302,6 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
                 st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
     from PIL import UnidentifiedImageError
 
-    valide_uploaded_images = []
-
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
     word_buffer.seek(0)
