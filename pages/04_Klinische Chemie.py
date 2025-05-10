@@ -206,30 +206,69 @@ if st.button("📁 Speichern und Exportieren"):
 
     # Word-Datei erstellen
     doc = Document()
-    doc.add_heading("Klinische Chemie Bericht", 0)
-    for label, value in {
-        "Patientenname": patient_name,
-        "Geburtstag/Alter": geburtstag,
-        "Geschlecht": geschlecht,
-        "Größe (cm)": groesse,
-        "Gewicht (kg)": gewicht,
-        **{k: v for k, v in felder.items()}
-    }.items():
+    doc.add_heading("Klinische Chemie", 0)
+    doc.add_paragraph(f"Bericht vom {datum.strftime('%d.%m.%Y')} – Patient: {patient_name}")
+    doc.add_paragraph("")  # Leerzeile
+
+    # Patientenangaben
+    doc.add_heading("Patientenangaben", level=1)
+    for label, value in [
+        ("Patientenname", patient_name),
+        ("Geburtstag/Alter", geburtstag),
+        ("Geschlecht", geschlecht),
+        ("Größe (cm)", groesse),
+        ("Gewicht (kg)", gewicht)
+    ]:
         doc.add_heading(label, level=2)
-        doc.add_paragraph(str(value))
+        doc.add_paragraph(value)
+
+    # Weitere Abschnitte
+    abschnitte = {
+        "Anamnese": {"Anamnese": anamnese},
+        "Präanalytik": {
+            "Probenmaterial": probenmaterial,
+            "Makroskopische Beurteilung": makro
+        },
+        "Analytik": {
+            "Reagenzien": reagenzien,
+            "Qualitätskontrolle": qc,
+            "Analyt/Methode/Gerät": methode,
+            "Technische Validation": validation
+        },
+        "Postanalytik": {
+            "Transversalbeurteilung": transversal,
+                "Plausibilitätskontrolle": plausi,
+            "Extremwerte": extremwerte,
+            "Konstellation": konstellation
+        },
+        "Freigabeentscheidung": {
+            "Freigabe": freigabe
+        },
+        "Weitere Angaben": {
+            "Vorbefunde": felder.get("vorbefunde", ""),
+            "Trend": felder.get("trend", "")
+        }
+    }
+
+    # Abschnitte in Word einfügen
+    for abschnitt, inhalte in abschnitte.items():
+        doc.add_heading(abschnitt, level=1)
+        for label, value in inhalte.items():
+            doc.add_heading(label, level=2)
+            doc.add_paragraph(str(value))
 
     if temp_uploaded_images:
         doc.add_page_break()
-        doc.add_heading("Mikroskopiebilder / Befundfotos", level=2)
+        doc.add_heading("Mikroskopiebilder / Befundbilder", level=1)
         for name, img_bytes in temp_uploaded_images:
             try:
-                image_pil = Image.open(io.BytesIO(img_bytes))
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-                    image_pil.save(tmp_img.name)
-                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+                img_stream = io.BytesIO(img_bytes)
+                doc.add_picture(img_stream, width=Inches(5))  # Breite nach Wunsch
+                doc.add_paragraph(name)
             except Exception as e:
-                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
+                doc.add_paragraph(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
 
+    # Word speichern
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
     word_buffer.seek(0)
@@ -237,26 +276,88 @@ if st.button("📁 Speichern und Exportieren"):
     dh_word.save(filename_word, word_buffer.getvalue())
 
     # PDF erstellen
+    def add_section(c, title, fields, x, y):
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(x, y, title)
+        y -= 0.8 * cm
+        c.setFont("Helvetica", 12)
+        for label, value in fields.items():
+           for line in str(value).splitlines():
+                c.drawString(x, y, f"{label}: {line}" if label else line)
+                y -= 0.6 * cm
+                label = ""
+                if y < 2 * cm:
+                    c.showPage()
+                    y = A4[1] - 2 * cm
+        y -= 0.5 * cm
+        return y
+
+    # Jetzt PDF generieren (nicht mehr eingerückt!)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
         c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
         x, y = 2 * cm, A4[1] - 2 * cm
+
+        # Kopf
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(x, y, "Klinische Chemie Bericht")
-        y -= 1.5 * cm
+        c.drawString(x, y, "Klinische Chemie")
+        y -= 1 * cm
         c.setFont("Helvetica", 12)
-        for label, value in {
+        c.drawString(x, y, f"Bericht vom {datum.strftime('%d.%m.%Y')} – Patient: {patient_name}")
+        y -= 1.5 * cm
+
+        # Abschnitte
+        y = add_section(c, "Patientenangaben", {
             "Patientenname": patient_name,
             "Geburtstag/Alter": geburtstag,
             "Geschlecht": geschlecht,
             "Größe (cm)": groesse,
-            "Gewicht (kg)": gewicht,
-            **{k: v for k, v in felder.items()}
-        }.items():
-            c.drawString(x, y, f"{label}: {value}")
-            y -= 0.6 * cm
-            if y < 2 * cm:
-                c.showPage()
-                y = A4[1] - 2 * cm
+            "Gewicht (kg)": gewicht
+        }, x, y)
+
+        y = add_section(c, "Anamnese", {"Anamnese": anamnese}, x, y)
+        y = add_section(c, "Präanalytik", {
+            "Probenmaterial": probenmaterial,
+            "Makroskopische Beurteilung": makro
+        }, x, y)
+        y = add_section(c, "Analytik", {
+            "Reagenzien": reagenzien,
+            "Qualitätskontrolle": qc,
+            "Analyt/Methode/Gerät": methode,
+            "Technische Validation": validation
+        }, x, y)
+        y = add_section(c, "Postanalytik", {
+            "Transversalbeurteilung": transversal,
+            "Plausibilitätskontrolle": plausi,
+            "Extremwerte": extremwerte,
+            "Konstellation": konstellation
+        }, x, y)
+        y = add_section(c, "Freigabeentscheidung", {"Freigabe": freigabe}, x, y)
+        y = add_section(c, "Weitere Angaben", {
+            "Vorbefunde": felder.get("vorbefunde", ""),
+            "Trend": felder.get("trend", "")
+        }, x, y)
+
+        # Bilder
+        if temp_uploaded_images:
+            c.showPage()
+            y = A4[1] - 2 * cm
+            c.setFont("Helvetica-Bold", 14)
+            c.drawString(x, y, "🖼 Mikroskopiebilder / Befundbilder")
+            y -= 1.2 * cm
+
+            for name, img_bytes in temp_uploaded_images:
+                try:
+                    image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                        image.save(tmp_img.name, format="PNG")
+                        c.drawImage(tmp_img.name, x, y - 6 * cm, width=12 * cm, height=6 * cm)
+                        y -= 7 * cm
+                        if y < 3 * cm:
+                            c.showPage()
+                            y = A4[1] - 2 * cm
+                except Exception as e:
+                    st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
+
         c.save()
         pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:6]}_bericht.pdf"
         with open(tmp_pdf.name, "rb") as f:

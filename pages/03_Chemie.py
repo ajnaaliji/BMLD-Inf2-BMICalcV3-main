@@ -261,6 +261,27 @@ if st.button("📎 Speichern und Exportieren"):
                 if y < 2 * cm:
                     c.showPage()
                     y = A4[1] - 2 * cm
+    # ==== Bilder im PDF einfügen ====
+    if temp_uploaded_images:
+        c.showPage()
+        y = A4[1] - 2 * cm
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(x, y, "Mikroskopiebilder / Versuchsbilder")
+        y -= 1 * cm
+
+        for name, img_bytes in temp_uploaded_images:
+            try:
+                image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                    image.save(tmp_img.name, format="PNG")
+                    c.drawImage(tmp_img.name, x, y - 6 * cm, width=12 * cm, height=6 * cm)
+                    y -= 7 * cm
+                    if y < 3 * cm:
+                        c.showPage()
+                        y = A4[1] - 2 * cm
+            except Exception as e:
+                st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
+           
         c.save()
         pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_title}.pdf"
         with open(tmp_pdf.name, "rb") as f:
