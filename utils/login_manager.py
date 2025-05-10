@@ -159,6 +159,7 @@ class LoginManager:
                         }
 
                         self._save_auth_credentials()
+                        st.session_state["registration_success"] = True
                         st.success(f"Benutzer {new_username} erfolgreich registriert.")
                         st.rerun()
         except Exception as e:

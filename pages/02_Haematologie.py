@@ -287,11 +287,11 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
     add_section_to_doc("Lymphozytenveränderungen", ly_felder, "ly", "lc_sonstiges")
     add_section_to_doc("Thrombozyten", th_felder, "th", "th_sonstiges")
 
-    if temp_uploaded_images:
+    if valide_uploaded_images:
         doc.add_page_break()
         doc.add_heading("Bilder", level=2)
 
-        for name, img_bytes in temp_uploaded_images:
+        for name, img_bytes in valide_uploaded_images:
             try:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img_file:
                     tmp_img_file.write(img_bytes)
@@ -379,26 +379,26 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
         y = draw_section(c, x, y, "Thrombozyten", th_felder, "th", "th_sonstiges")
 
     # Bilder einfügen
-        if temp_uploaded_images:
-            c.showPage()
-            y = A4[1] - 2 * cm
-            c.setFont("Helvetica-Bold", 14)
-            c.drawString(x, y, "Bilder")
-            y -= 1.2 * cm
+if valide_uploaded_images:
+    c.showPage()
+    y = A4[1] - 2 * cm
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(x, y, "Bilder")
+    y -= 1.2 * cm
 
-            for name, img_bytes in temp_uploaded_images:
-                try:
-                    tmp_path = f"{tempfile.gettempdir()}/{uuid.uuid4().hex}.png"
-                    with open(tmp_path, "wb") as f_img:
-                        f_img.write(img_bytes)
-                    c.drawImage(tmp_path, x, y - 7 * cm, width=12 * cm, height=6 * cm)
-                    y -= 8 * cm
-                    if y < 3 * cm:
-                        c.showPage()
-                        y = A4[1] - 2 * cm
-                except Exception as e:
-                    st.warning(f"⚠️ Bild konnte nicht ins PDF eingefügt werden: {name} ({e})")
-
+    for name, img_bytes in valide_uploaded_images:
+        try:
+            tmp_path = f"{tempfile.gettempdir()}/{uuid.uuid4().hex}.png"
+            with open(tmp_path, "wb") as f_img:
+                f_img.write(img_bytes)
+            c.drawImage(tmp_path, x, y - 7 * cm, width=12 * cm, height=6 * cm)
+            y -= 8 * cm
+            if y < 3 * cm:
+                c.showPage()
+                y = A4[1] - 2 * cm
+        except Exception as e:
+            st.warning(f"⚠️ Bild konnte nicht ins PDF eingefügt werden: {name} ({e})")
+  
         c.save()
 
     # PDF-Datei speichern
@@ -409,7 +409,7 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
     anhang_dateien.append(pdf_filename)
 
     from PIL import UnidentifiedImageError
-    
+
     # ==== Eintrag speichern ====
     neuer_eintrag = {
         "titel": titel,

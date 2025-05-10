@@ -114,6 +114,9 @@ st.markdown(f"""
 if st.session_state.get("authentication_status") is not True:
     login_manager.login_register()
     st.stop()
+if st.session_state.get("registration_success", False):
+    st.success("✅ Registrierung erfolgreich! Du kannst dich jetzt einloggen.")
+    st.session_state["registration_success"] = False
 
 # ===== Logout-Button =====
 if st.button("Logout 🔓"):
