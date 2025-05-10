@@ -406,7 +406,7 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
             except Exception as e:
                 st.warning(f"⚠️ Bild konnte nicht ins PDF eingefügt werden: {name} ({e})")
   
-        c.save()
+    c.save()
 
     # PDF-Datei speichern
     pdf_filename = f"{timestamp}_{safe_titel}.pdf"
