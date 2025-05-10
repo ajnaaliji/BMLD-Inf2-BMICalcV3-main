@@ -423,8 +423,10 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
         "datum": datum.strftime("%Y-%m-%d"),
         "anhaenge": anhang_dateien,
         "dateiname": filename_word,
+        "pdfname": pdf_filename,   # <--- DAS FEHLT!
         "zeit": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
+
     neuer_eintrag["semester"] = str(semester)
 
     df_neu = pd.DataFrame([neuer_eintrag])

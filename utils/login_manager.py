@@ -160,7 +160,6 @@ class LoginManager:
 
                         self._save_auth_credentials()
                         st.session_state["registration_success"] = True
-                        st.success(f"Benutzer {new_username} erfolgreich registriert.")
                         st.rerun()
         except Exception as e:
             st.error(f"Fehler bei der Registrierung: {e}")
@@ -173,4 +172,5 @@ class LoginManager:
             st.switch_page(login_page_py_file)
         else:
             self.authenticator.logout()
+
 
