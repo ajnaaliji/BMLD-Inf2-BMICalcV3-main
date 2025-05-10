@@ -44,7 +44,7 @@ if not dh.filesystem.exists(dh.root_path):
 
 # === Kategorien ===
 bereiche = {
-    "Weißes Blutbild": [
+    "Weisses Blutbild": [
         "Myeloblast", "Promyelozyt", "Myelozyt", "Metamyelozyt",
         "Stabkerniger", "Segmentkerniger", "Eosinophiler", "Basophiler",
         "Monozyt", "Lymphozyt", "Plasmazelle", "Nicht klassifizierbar (weiß)"
@@ -83,15 +83,31 @@ for idx, eintrag in enumerate(st.session_state.zell_eintraege):
     </h4>
     """, unsafe_allow_html=True)
 
-bild = st.file_uploader("", type=["png", "jpg", "jpeg"], key=f"bild_{idx}")
-if bild is not None:
+upload = st.file_uploader("", type=["png", "jpg", "jpeg"], key=f"bild_{idx}")
+bildname = upload.name if upload else None
+if upload is not None:
     try:
-        Image.open(bild).verify()
+        img = Image.open(upload)
+        img.verify()
+        upload.seek(0)
+        img = Image.open(upload).convert("RGB")
+        temp_bytes = io.BytesIO()
+        img.save(temp_bytes, format="JPEG")
+        temp_bytes.seek(0)
+        bild = temp_bytes
     except Exception as e:
-        st.warning(f"⚠️ Hochgeladenes Bild ist ungültig: {e}")
-        bild = None  # wird dann nicht gespeichert
+        st.warning(f"⚠️ Hochgeladenes Bild ist beschädigt oder ungeeignet: {e}")
+        bild = None
+else:
+    bild = None
+
 beschreibung = st.text_area("Beschreibung / Merkmale", key=f"beschreibung_{idx}")
-st.session_state.zell_eintraege[idx] = {"typ": typ, "beschreibung": beschreibung, "bild": bild}
+st.session_state.zell_eintraege[idx] = {
+    "typ": typ,
+    "beschreibung": beschreibung,
+    "bild": bild,
+    "bildname": bildname
+}
 
 # === Plus-Button ===
 st.markdown("---")
@@ -113,7 +129,8 @@ if st.button("📂 Alle Einträge speichern"):
             }
             if eintrag["bild"]:
                 img_bytes = eintrag["bild"].getvalue()
-                img_name = f"{timestamp}_{eintrag['bild'].name.replace(' ', '_')}"
+                bildname = eintrag.get("bildname", "bild.jpg").replace(" ", "_")
+                img_name = f"{timestamp}_{bildname}"
                 dh.save(img_name, img_bytes)
                 eintrag_data["bild"] = img_name
 
