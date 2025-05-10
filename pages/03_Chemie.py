@@ -160,7 +160,16 @@ if uploaded_images:
         if any(f.endswith(clean_name) for f in bestehende_bilder):
             st.info(f"⏭️ Bild bereits vorhanden: {clean_name}")
             continue
-        temp_uploaded_images.append((clean_name, image_bytes))
+        try:
+            image_pil = Image.open(io.BytesIO(image_bytes))
+            image_pil.verify()  # Prüfen, ob Bild beschädigt
+            img_converted = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            temp_bytes = io.BytesIO()
+            img_converted.save(temp_bytes, format="JPEG")
+            temp_bytes.seek(0)
+            temp_uploaded_images.append((clean_name, temp_bytes.getvalue()))
+        except Exception as e:
+            st.warning(f"⚠️ Bild beschädigt oder ungeeignet: {clean_name} ({e})")
 
 # ==== Anhänge ====
 st.markdown(f"""
