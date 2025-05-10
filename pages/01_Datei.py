@@ -143,8 +143,10 @@ if fach_key == "chemie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
     
-    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
-
+    if "semester" in eintrags_df.columns:
+        eintrags_df["semester"] = eintrags_df["semester"].astype(str).fillna("")
+    else:
+        eintrags_df["semester"] = ""
 elif fach_key == "klinische chemie":
     data_key = "klinische_eintraege"
     data_manager.load_user_data(data_key, f"data_klinische_chemie_{username}.csv", initial_value=[])
@@ -154,8 +156,10 @@ elif fach_key == "klinische chemie":
     eintrags_df = pd.DataFrame(st.session_state[data_key])
     eintrags_df = entferne_verwaiste_eintraege(eintrags_df, data_key, dh, dh_anhang, data_manager)
 
-    eintrags_df["semester"] = eintrags_df.get("semester", "").astype(str).fillna("")
-
+    if "semester" in eintrags_df.columns:
+        eintrags_df["semester"] = eintrags_df["semester"].astype(str).fillna("")
+    else:
+        eintrags_df["semester"] = ""
 elif fach_key == "haematologie":
     data_key = "haematologie_eintraege"
     data_manager.load_user_data(data_key, "data_haematologie.csv", initial_value=[])
