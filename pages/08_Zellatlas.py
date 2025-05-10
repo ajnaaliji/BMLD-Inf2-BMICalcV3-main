@@ -275,8 +275,11 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
     </h2>
     """, unsafe_allow_html=True)
 
-    st.download_button("⬇️ Gesamtes Word-Dokument", data=word_buffer, file_name="Zellatlas_Haematologie.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-    st.download_button("⬇️ Gesamtes PDF-Dokument", data=pdf_data, file_name="Zellatlas_Haematologie.pdf", mime="application/pdf")
+    if 'word_buffer' in locals():
+        st.download_button("⬇️ Gesamtes Word-Dokument", data=word_buffer, file_name="Zellatlas_Haematologie.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+    if 'pdf_data' in locals():
+        st.download_button("⬇️ Gesamtes PDF-Dokument", data=pdf_data, file_name="Zellatlas_Haematologie.pdf", mime="application/pdf")
 
 # === Zurück zur Übersicht ===
 st.markdown("---")
