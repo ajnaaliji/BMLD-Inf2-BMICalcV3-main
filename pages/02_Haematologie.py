@@ -307,7 +307,14 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
     word_buffer = io.BytesIO()
     doc.save(word_buffer)
     word_buffer.seek(0)
-    filename_word = f"{timestamp}_{titel.replace(' ', '_')}.docx"
+    import re
+
+    safe_titel = re.sub(r"[^\w\-_.]", "_", titel.strip())
+    if not safe_titel:
+        st.warning("Der Titel enthält keine gültigen Zeichen für einen Dateinamen.")
+        st.stop()
+
+    filename_word = f"{timestamp}_{safe_titel}.docx"
     dh_word.save(filename_word, word_buffer.getvalue())
 
     # ==== PDF erstellen ====
