@@ -34,7 +34,8 @@ def load_icon_base64(path):
     with open(path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
-img_icon = load_icon_base64("assets/clinical_chemistry.png")
+img_icon = load_icon_base64(
+    "assets/clinical_chemistry.png")
 img_paper = load_icon_base64("assets/paperclip.png")
 img_pic = load_icon_base64("assets/picture.png")
 img_post = load_icon_base64("assets/postanalyt.png")
@@ -82,6 +83,15 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 anamnese = st.text_area("Anamnese", height=100)
+
+# ==== Vorbefunde ====
+st.markdown(f"""
+<div style="display: flex; align-items: center; margin-bottom: 1rem;">
+    <img src="data:image/png;base64,{img_befund}" style="height: 40px; margin-right: 10px;" />
+    <h2 style="margin: 0;">Vorbefunde</h2>
+</div>
+""", unsafe_allow_html=True)
+vorbefunde = st.text_area("Vorbefunde", height=100)
 
 # ==== Präanalytik ====
 st.markdown(f"""
@@ -133,8 +143,11 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 freigabe = st.text_area("Freigabeentscheidung", height=100)
 
+trend = st.text_area("Trend (zu Vorbefunden, falls vorhanden)", height=100)
+konstellation = st.text_area("Konstellationskontrolle der Werte miteinander", height=100)
+
 felder = {
-    "vorbefunde": st.text_area("Vorbefunde", height=100),
+    "vorbefunde": vorbefunde,
     "probenmaterial": probenmaterial,
     "makro": makro,
     "reagenzien": reagenzien,
@@ -144,7 +157,7 @@ felder = {
     "transversal": transversal,
     "plausi": plausi,
     "extremwerte": extremwerte,
-    "trend": st.text_area("Trend (zu Vorbefunden, falls vorhanden)", height=100),
+    "trend": trend,
     "konstellation": konstellation,
 }
 
@@ -292,7 +305,7 @@ if st.button("📁 Speichern und Exportieren"):
         y -= 0.5 * cm
         return y
 
-    # Jetzt PDF generieren (nicht mehr eingerückt!)
+    # PDF generieren
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_pdf:
         c = canvas.Canvas(tmp_pdf.name, pagesize=A4)
         x, y = 2 * cm, A4[1] - 2 * cm
@@ -315,6 +328,7 @@ if st.button("📁 Speichern und Exportieren"):
         }, x, y)
 
         y = add_section(c, "Anamnese", {"Anamnese": anamnese}, x, y)
+        y = add_section(c, "Vorbefunde", {"Vorbefunde": felder.get("vorbefunde", "")}, x, y)
         y = add_section(c, "Präanalytik", {
             "Probenmaterial": probenmaterial,
             "Makroskopische Beurteilung": makro
@@ -331,13 +345,10 @@ if st.button("📁 Speichern und Exportieren"):
             "Extremwerte": extremwerte,
             "Konstellation": konstellation
         }, x, y)
+        y = add_section(c, "Trend", {"Trend": felder.get("trend", "")}, x, y)
         y = add_section(c, "Freigabeentscheidung", {"Freigabe": freigabe}, x, y)
-        y = add_section(c, "Weitere Angaben", {
-            "Vorbefunde": felder.get("vorbefunde", ""),
-            "Trend": felder.get("trend", "")
-        }, x, y)
 
-        # Bilder
+        # Bilder (optional)
         if temp_uploaded_images:
             c.showPage()
             y = A4[1] - 2 * cm
@@ -358,6 +369,7 @@ if st.button("📁 Speichern und Exportieren"):
                 except Exception as e:
                     st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
 
+        # Speichern (immer nur hier!)
         c.save()
         pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:6]}_bericht.pdf"
         with open(tmp_pdf.name, "rb") as f:

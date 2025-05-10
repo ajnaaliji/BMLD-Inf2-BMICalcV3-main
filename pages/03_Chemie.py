@@ -225,9 +225,9 @@ if st.button("📎 Speichern und Exportieren"):
         for name, img_bytes in temp_uploaded_images:
             try:
                 image_pil = Image.open(io.BytesIO(img_bytes))
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-                    image_pil.save(tmp_img.name)
-                    doc.add_picture(tmp_img.name, width=Inches(4.5))
+                tmp_path = f"{tempfile.gettempdir()}/{uuid.uuid4().hex}.png"
+                image_pil.save(tmp_path)
+                doc.add_picture(tmp_path, width=Inches(4.5))
             except Exception as e:
                 st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
 
@@ -261,6 +261,7 @@ if st.button("📎 Speichern und Exportieren"):
                 if y < 2 * cm:
                     c.showPage()
                     y = A4[1] - 2 * cm
+
     # ==== Bilder im PDF einfügen ====
     if temp_uploaded_images:
         c.showPage()
@@ -281,13 +282,14 @@ if st.button("📎 Speichern und Exportieren"):
                         y = A4[1] - 2 * cm
             except Exception as e:
                 st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name} ({e})")
-           
-        c.save()
-        pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_title}.pdf"
-        with open(tmp_pdf.name, "rb") as f:
-            pdf_bytes = f.read()
-            dh_docs.save(pdf_filename, pdf_bytes)
-            anhang_dateien.append(pdf_filename)
+   
+    # ==== PDF speichern (immer genau 1x, außerhalb der if!) ====
+    c.save()
+    pdf_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}_{safe_title}.pdf"
+    with open(tmp_pdf.name, "rb") as f:
+        pdf_bytes = f.read()
+        dh_docs.save(pdf_filename, pdf_bytes)
+        anhang_dateien.append(pdf_filename)
 
     # ==== Speichern als DataFrame ====
     neuer_eintrag = {
