@@ -122,16 +122,19 @@ st.markdown(f"""
     <h2 style="margin: 0;">Postanalytik</h2>
 </div>
 """, unsafe_allow_html=True)
+
 st.markdown("<h4 style='margin-top: 1rem; margin-bottom: 0.3rem; text-decoration: underline; color: #333;'>Biomedizinische Validation</h4>", unsafe_allow_html=True)
 transversal = st.text_area("Transversalbeurteilung", height=100)
-plausi = st.text_area("Plausibilitätskontrolle", height=100)
+
 st.markdown(f"""
 <div style="display: flex; align-items: center; margin-bottom: 0.8rem;">
     <img src="data:image/png;base64,{img_kontrolle}" style="height: 40px; margin-right: 10px;" />
     <h3 style="margin: 0;">Plausibilitätskontrolle</h3>
 </div>
 """, unsafe_allow_html=True)
+
 extremwerte = st.text_area("Extremwerte", height=100)
+trend = st.text_area("Trend (zu Vorbefunden, falls vorhanden)", height=100)
 konstellation = st.text_area("Konstellationskontrolle der Werte miteinander", height=100)
 
 # ==== Freigabe ====
@@ -143,9 +146,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 freigabe = st.text_area("Freigabeentscheidung", height=100)
 
-trend = st.text_area("Trend (zu Vorbefunden, falls vorhanden)", height=100)
-konstellation = st.text_area("Konstellationskontrolle der Werte miteinander", height=100)
-
 felder = {
     "vorbefunde": vorbefunde,
     "probenmaterial": probenmaterial,
@@ -155,7 +155,6 @@ felder = {
     "methode": methode,
     "validation": validation,
     "transversal": transversal,
-    "plausi": plausi,
     "extremwerte": extremwerte,
     "trend": trend,
     "konstellation": konstellation,
@@ -229,7 +228,7 @@ if st.button("📁 Speichern und Exportieren"):
         ("Patientenname", patient_name),
         ("Geburtstag/Alter", geburtstag),
         ("Geschlecht", geschlecht),
-        ("Größe (cm)", groesse),
+        ("Grösse (cm)", groesse),
         ("Gewicht (kg)", gewicht)
     ]:
         doc.add_heading(label, level=2)
@@ -238,6 +237,7 @@ if st.button("📁 Speichern und Exportieren"):
     # Weitere Abschnitte
     abschnitte = {
         "Anamnese": {"Anamnese": anamnese},
+        "Vorbefunde": {"Vorbefunde": vorbefunde},
         "Präanalytik": {
             "Probenmaterial": probenmaterial,
             "Makroskopische Beurteilung": makro
@@ -250,16 +250,12 @@ if st.button("📁 Speichern und Exportieren"):
         },
         "Postanalytik": {
             "Transversalbeurteilung": transversal,
-                "Plausibilitätskontrolle": plausi,
             "Extremwerte": extremwerte,
+            "Trend": trend,
             "Konstellation": konstellation
         },
         "Freigabeentscheidung": {
             "Freigabe": freigabe
-        },
-        "Weitere Angaben": {
-            "Vorbefunde": felder.get("vorbefunde", ""),
-            "Trend": felder.get("trend", "")
         }
     }
 
@@ -341,8 +337,8 @@ if st.button("📁 Speichern und Exportieren"):
         }, x, y)
         y = add_section(c, "Postanalytik", {
             "Transversalbeurteilung": transversal,
-            "Plausibilitätskontrolle": plausi,
             "Extremwerte": extremwerte,
+            "Trend": trend,
             "Konstellation": konstellation
         }, x, y)
         y = add_section(c, "Trend", {"Trend": felder.get("trend", "")}, x, y)
