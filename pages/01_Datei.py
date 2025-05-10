@@ -123,7 +123,7 @@ with col2:
         st.switch_page(seiten.get(fach_key, "Start.py"))
 with col3:
     if fach_key == "haematologie" and st.button("Zellatlas"):
-        st.switch_page("pages/08_Referenz_Haematologie.py")
+        st.switch_page("pages/08_Zellatlas.py")
     elif fach_key == "klinische chemie" and st.button("Referenzwerte"):
         st.switch_page("pages/07_Referenzwerte.py")
 
