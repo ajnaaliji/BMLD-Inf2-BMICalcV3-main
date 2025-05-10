@@ -161,8 +161,11 @@ if uploaded_images:
             st.info(f"⏭️ Bild bereits vorhanden: {clean_name}")
             continue
         try:
-            image_pil = Image.open(io.BytesIO(image_bytes))
-            image_pil.verify()  # Prüfen, ob Bild beschädigt
+            # Erst prüfen, ob Bild überhaupt ladbar ist
+            test_img = Image.open(io.BytesIO(image_bytes))
+            test_img.verify()
+
+            # Danach mit frischem Stream erneut öffnen + konvertieren
             img_converted = Image.open(io.BytesIO(image_bytes)).convert("RGB")
             temp_bytes = io.BytesIO()
             img_converted.save(temp_bytes, format="JPEG")
