@@ -64,8 +64,8 @@ if "zell_eintraege" not in st.session_state:
 
 # === Eingabeformulare ===
 st.markdown(f"""
-<h1 style='display: flex; align-items: center; gap: 16px; margin-bottom: 0; justify-content: space-between;'>
-    <span>Zellatlas Hämatologie</span>
+<h1 style='display: flex; align-items: center; gap: 16px; margin-bottom: 0;'>
+    Zellatlas Hämatologie
     <img src='data:image/png;base64,{img_guide}' width='48'>
 </h1>
 <p style='margin-top: 4px; font-size: 20px; text-decoration: underline; color: #333;'>
