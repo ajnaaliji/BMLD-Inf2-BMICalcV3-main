@@ -12,7 +12,7 @@ Unsere App richtet sich an Mitstudierende des BMLD-Studiengangs. Deshalb war es 
 
 ## Herausforderungen
 
-Während der Entwicklung sind wir immer wieder an unsere Grenzen gestoßen – sowohl technisch als auch organisatorisch. Besonders herausfordernd waren:
+Während der Entwicklung sind wir immer wieder an unsere Grenzen gestossen – sowohl technisch als auch organisatorisch. Besonders herausfordernd waren:
 
 - Fehlermeldungen, die oft unklar formuliert oder irreführend waren
 - Die richtige Balance zwischen Funktionalität und Einfachheit
