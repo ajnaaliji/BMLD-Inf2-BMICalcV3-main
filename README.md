@@ -4,7 +4,7 @@
 
 Dieses Projekt ist eine digitale Laborjournal-App, die speziell für Studierende der biomedizinischen Labordiagnostik (BMLD) entwickelt wurde. Ziel der Anwendung ist es, Studierende bei der Dokumentation ihrer Praktikumsarbeiten und Versuchsprotokolle optimal zu unterstützen.
 
-Die App ermöglicht eine strukturierte und zentrale Erfassung von Einträgen und stellt relevante Hilfsunterlagen jederzeit digital zur Verfügung — sowohl während des Unterrichts als auch bei externen Praktika in Kliniken, Spitälern oder Forschungseinrichtungen.
+Die App ermöglicht eine strukturierte und zentrale Erfassung von Einträgen und stellt relevante Hilfsunterlagen jederzeit digital zur Verfügung, sowohl während des Unterrichts als auch bei externen Praktika in Kliniken, Spitälern oder Forschungseinrichtungen.
 
 Durch verschiedene Funktionen wird ein effizienter und praxisnaher Arbeitsablauf gefördert und die Qualität der Dokumentation verbessert.
 

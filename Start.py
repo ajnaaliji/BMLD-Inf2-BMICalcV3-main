@@ -153,6 +153,18 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+with st.expander("ℹ️ Wie funktioniert die App?"):
+    st.markdown("""
+    1. **Fach auswählen:** Wähle dein Fach (z. B. Hämatologie, Chemie oder Klinische Chemie).
+    2. **Einträge verwalten:** Du siehst eine Übersicht deiner bisherigen Einträge.
+        - Filtere nach **Datum**, **Versuchstitel** oder **Semester**, um schneller das Gesuchte zu finden.
+    3. **Neuen Eintrag erstellen:** Dokumentiere neue Praktikumsversuche direkt in der App.
+    4. **Bilder und Dokumente hochladen:** Lade Mikroskopiebilder, PDFs oder Word-Dateien zu jedem Eintrag hoch.
+    5. **Alte Dokumente verwalten:** Auch externe Dateien kannst du zentral verwalten und mit vorhandenen Einträgen verknüpfen.
+    6. **Exportieren:** Speichere deine Einträge als Word- oder PDF-Datei – automatisch formatiert.
+    7. **Zellatlas (Hämatologie):** Dokumentiere und durchsuchen Zellbilder zur späteren Identifikation.
+    """)
+
 # ===== Fachauswahl-Karten =====
 st.markdown("<h3 style='text-align: center;'>Wähle dein gewünschtes Fach:</h3>", unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
@@ -185,3 +197,12 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# ===== Entwickler-Kontakt (Footer) =====
+st.markdown("""
+<hr style="margin-top: 50px; margin-bottom: 10px;">
+<div style="text-align: center; font-size: 14px; color: grey;">
+    <p>Entwickelt von Ajna Aliji & Melisa Dedukic</p>
+    <p>Kontakt: <a href="mailto:alijiajna@students.zhaw.ch">alijiajna@students.zhaw.ch</a> &middot;
+    <a href="mailto:dedukmel@students.zhaw.ch">dedukmel@students.zhaw.ch</a></p>
+</div>
+""", unsafe_allow_html=True)
