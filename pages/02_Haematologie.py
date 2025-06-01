@@ -216,6 +216,9 @@ if uploaded_images:
                 valide_uploaded_images.append((name_clean, img_bytes))
             except (UnidentifiedImageError, ValueError, ZeroDivisionError) as e:
                 st.warning(f"⚠️ Bild konnte nicht eingefügt werden: {name_clean} ({e})")
+                # Falls keine Bilder hochgeladen wurden, trotzdem leere Liste definieren
+if "valide_uploaded_images" not in locals():
+    valide_uploaded_images = []
 
 # ==== Datei-Upload ====
 st.markdown(f"""
@@ -387,7 +390,7 @@ if st.button("📂 Speichern und Exportieren") and not st.session_state["haema_e
 
     # Bilder einfügen (robustere Version mit PIL)
 
-    if valide_uploaded_images:
+    if "valide_uploaded_images" in locals() and valide_uploaded_images:
         c.showPage()
         y = A4[1] - 2 * cm
         c.setFont("Helvetica-Bold", 14)

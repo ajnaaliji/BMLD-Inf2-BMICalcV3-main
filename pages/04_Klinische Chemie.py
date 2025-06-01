@@ -403,8 +403,6 @@ if st.button("📁 Speichern und Exportieren"):
     st.download_button("⬇️ Word herunterladen", word_buffer, file_name=filename_word, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
     st.download_button("⬇️ PDF herunterladen", pdf_bytes, file_name=pdf_filename, mime="application/pdf")
 
-    st.markdown("📎 Zum Teilen einfach herunterladen und weitergeben.")
-
 # ==== Zurück ==== 
 if st.button("🔙 Zurück zur Übersicht"):
     st.switch_page("pages/01_Datei.py")
