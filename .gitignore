@@ -178,3 +178,6 @@ cython_debug/
 # Persönliche, nutzerspezifische Dateien (nicht pushen)
 data/data_chemie_*.csv
 data/word_chemie/**/**/*.docx
+
+# macOS system files
+*.DS_Store
