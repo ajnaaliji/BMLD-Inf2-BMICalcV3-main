@@ -89,4 +89,4 @@ Melisa Dedukic
 
 ## Link zur App
 
-[Zum Laborjournal-Projekt](https://melinja.streamlit.app/)
+[Zum Laborjournal-Projekt](https://melinjaneu.streamlit.app/)
